@@ -44,6 +44,37 @@
 - (BOOL)dismissModalFullScreenIfNeeded;
 @end
 
+@protocol FBSceneClientProvider
+- (void)endTransaction;
+- (void)beginTransaction;
+@end
+
+@interface FBSSceneSettings : NSObject <NSMutableCopying>
+
+@end
+
+@interface FBSMutableSceneSettings : FBSSceneSettings
+
+@property(nonatomic, getter=isBackgrounded) BOOL backgrounded;
+
+@end
+
+@interface FBSSettingsDiff : NSObject
+
+@end
+
+@interface FBSSceneSettingsDiff : FBSSettingsDiff
+
++ (id)diffFromSettings:(id)arg1 toSettings:(id)arg2;
+
+@end
+
+@class FBSSceneTransitionContext;
+
+@protocol FBSceneClient
+- (void)host:(id/* <FBSceneHost>*/)arg1 didUpdateSettings:(FBSSceneSettings *)arg2 withDiff:(FBSSceneSettingsDiff *)arg3 transitionContext:(FBSSceneTransitionContext *)arg4 completion:(void (^)(BOOL))arg5;
+@end
+
 @interface FBSceneHostWrapperView : UIView
 
 @end
@@ -57,13 +88,30 @@
 
 @interface FBScene : NSObject
 
+@property(readonly, retain, nonatomic) id <FBSceneClientProvider> clientProvider;
+@property(readonly, retain, nonatomic) id <FBSceneClient> client;
+@property(readonly, retain, nonatomic) FBSSceneSettings *settings;
+
 - (FBSceneHostManager*)contextHostManager;
+
+@end
+
+@interface FBSceneManager : NSObject
+
++ (FBSceneManager*)sharedInstance;
+- (FBScene*)sceneWithIdentifier:(NSString*)identifier;
 
 @end
 
 @interface SBApplication : NSObject
 
 - (FBScene*)mainScene;
+- (NSString*)bundleIdentifier;
+
+// NEW
+- (void)appcenter_setBackgrounded:(BOOL)backgrounded;
+- (void)appcenter_startBackgrounding;
+- (void)appcenter_stopBackgrounding;
 
 @end
 
@@ -115,9 +163,12 @@
 
 - (void)controlCenterDidDismiss {
   [self.sceneHostManager disableHostingForRequester:REQUESTER];
+  [self.app appcenter_stopBackgrounding];
 }
 
 - (void)controlCenterWillPresent {
+  [self.app appcenter_startBackgrounding];
+
   self.sceneHostManager = [[self.app mainScene] contextHostManager];
   self.hostView = [self.sceneHostManager hostViewForRequester:REQUESTER enableAndOrderFront:true];
 
@@ -145,6 +196,38 @@
 
 #pragma mark Hooks
 
+%hook SBApplication
+
+%new
+- (void)appcenter_setBackgrounded:(BOOL)backgrounded {
+  FBSceneManager *sceneManager = [%c(FBSceneManager) sharedInstance];
+  FBScene *scene = [sceneManager sceneWithIdentifier:[self bundleIdentifier]];
+  id <FBSceneClientProvider> clientProvider = [scene clientProvider];
+  id <FBSceneClient> client = [scene client];
+
+  FBSSceneSettings *settings = [scene settings];
+  FBSMutableSceneSettings *mutableSettings = [settings mutableCopy];
+
+  [mutableSettings setBackgrounded:backgrounded];
+
+  FBSSceneSettingsDiff *settingsDiff = [%c(FBSSceneSettingsDiff) diffFromSettings:settings toSettings:mutableSettings];
+
+  [clientProvider beginTransaction];
+  [client host:scene didUpdateSettings:mutableSettings withDiff:settingsDiff transitionContext:nil completion:nil];
+  [clientProvider endTransaction];
+}
+
+%new
+- (void)appcenter_startBackgrounding {
+  [self appcenter_setBackgrounded:false];
+}
+
+%new
+- (void)appcenter_stopBackgrounding {
+  [self appcenter_setBackgrounded:true];
+}
+
+%end
 
 %hook CCUIControlCenterViewController
 
