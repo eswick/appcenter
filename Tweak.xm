@@ -90,8 +90,12 @@
 }
 
 - (void)viewWillLayoutSubviews {
-  CGPoint screenCenter = CGPointMake([UIScreen mainScreen].bounds.size.width / 2, [UIScreen mainScreen].bounds.size.height / 2);
-  self.hostView.center = [self.view convertPoint:screenCenter fromView:[[UIApplication sharedApplication] keyWindow]];
+  CGRect frame = self.hostView.frame;
+
+  frame.origin.x = self.view.frame.origin.x;
+  frame.origin.y = self.view.frame.size.height - self.hostView.frame.size.height;
+
+  self.hostView.frame = frame;
 }
 
 - (void)loadView {
