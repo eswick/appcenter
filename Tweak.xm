@@ -47,31 +47,6 @@
   return self;
 }
 
-- (void)controlCenterWillFinishTransitionOpen:(BOOL)arg1 withDuration:(NSTimeInterval)arg2 {
-  [self.app appcenter_startBackgroundingWithCompletion:^void(BOOL success) {
-    if (arg1) {
-      dispatch_async(dispatch_get_main_queue(), ^{
-        self.sceneHostManager = [[self.app mainScene] contextHostManager];
-        self.hostView = [self.sceneHostManager hostViewForRequester:REQUESTER enableAndOrderFront:true];
-
-        self.hostView.layer.cornerRadius = 10;
-        self.hostView.layer.masksToBounds = true;
-
-        CGFloat scale = self.view.bounds.size.width / [[UIScreen mainScreen] bounds].size.width;
-        self.hostView.transform = CGAffineTransformMakeScale(scale, scale);
-
-        self.hostView.alpha = 0.0;
-
-        [self.view addSubview:self.hostView];
-
-        [UIView animateWithDuration:0.25 animations:^{
-          self.hostView.alpha = 1.0;
-        }];
-      });
-    }
-  }];
-}
-
 - (void)controlCenterDidFinishTransition {
 
 }
@@ -86,7 +61,26 @@
 }
 
 - (void)controlCenterWillPresent {
+  [self.app appcenter_startBackgroundingWithCompletion:^void(BOOL success) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+      self.sceneHostManager = [[self.app mainScene] contextHostManager];
+      self.hostView = [self.sceneHostManager hostViewForRequester:REQUESTER enableAndOrderFront:true];
 
+      self.hostView.layer.cornerRadius = 10;
+      self.hostView.layer.masksToBounds = true;
+
+      CGFloat scale = self.view.bounds.size.width / [[UIScreen mainScreen] bounds].size.width;
+      self.hostView.transform = CGAffineTransformMakeScale(scale, scale);
+
+      self.hostView.alpha = 0.0;
+
+      [self.view addSubview:self.hostView];
+
+      [UIView animateWithDuration:0.25 animations:^{
+        self.hostView.alpha = 1.0;
+      }];
+    });
+  }];
 }
 
 - (void)viewWillLayoutSubviews {
@@ -159,5 +153,11 @@
   [self _addContentViewController:pageViewController];
   [pageViewController release];
 }
+
+%end
+
+%hook CCUIControlCenterPagePlatterView
+
+
 
 %end
