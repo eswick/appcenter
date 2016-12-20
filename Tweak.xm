@@ -26,7 +26,6 @@
 @property (nonatomic, assign) id <CCUIControlCenterPageContentViewControllerDelegate> delegate;
 @property (nonatomic, retain) FBSceneHostManager *sceneHostManager;
 @property (nonatomic, retain) FBSceneHostWrapperView *hostView;
-@property (nonatomic, assign) BOOL controlCenterOpening;
 
 - (id)initWithBundleIdentifier:(NSString*)bundleIdentifier;
 - (void)controlCenterDidFinishTransition;
@@ -48,31 +47,31 @@
   return self;
 }
 
+- (void)controlCenterWillFinishTransitionOpen:(BOOL)arg1 withDuration:(NSTimeInterval)arg2 {
+  [self.app appcenter_startBackgroundingWithCompletion:^void(BOOL success) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+      self.sceneHostManager = [[self.app mainScene] contextHostManager];
+      self.hostView = [self.sceneHostManager hostViewForRequester:REQUESTER enableAndOrderFront:true];
+
+      self.hostView.layer.cornerRadius = 10;
+      self.hostView.layer.masksToBounds = true;
+
+      CGFloat scale = self.view.bounds.size.width / [[UIScreen mainScreen] bounds].size.width;
+      self.hostView.transform = CGAffineTransformMakeScale(scale, scale);
+
+      self.hostView.alpha = 0.0;
+
+      [self.view addSubview:self.hostView];
+
+      [UIView animateWithDuration:0.25 animations:^{
+        self.hostView.alpha = 1.0;
+      }];
+    });
+  }];
+}
+
 - (void)controlCenterDidFinishTransition {
 
-  if (self.controlCenterOpening) {
-    self.controlCenterOpening = false;
-    [self.app appcenter_startBackgroundingWithCompletion:^void(BOOL success) {
-      dispatch_async(dispatch_get_main_queue(), ^{
-        self.sceneHostManager = [[self.app mainScene] contextHostManager];
-        self.hostView = [self.sceneHostManager hostViewForRequester:REQUESTER enableAndOrderFront:true];
-
-        self.hostView.layer.cornerRadius = 10;
-        self.hostView.layer.masksToBounds = true;
-
-        CGFloat scale = self.view.bounds.size.width / [[UIScreen mainScreen] bounds].size.width;
-        self.hostView.transform = CGAffineTransformMakeScale(scale, scale);
-
-        self.hostView.alpha = 0.0;
-
-        [self.view addSubview:self.hostView];
-
-        [UIView animateWithDuration:0.25 animations:^{
-          self.hostView.alpha = 1.0;
-        }];
-      });
-    }];
-  }
 }
 
 - (void)controlCenterWillBeginTransition {
@@ -85,7 +84,7 @@
 }
 
 - (void)controlCenterWillPresent {
-  self.controlCenterOpening = true;
+
 }
 
 - (void)viewWillLayoutSubviews {
