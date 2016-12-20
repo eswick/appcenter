@@ -35,3 +35,9 @@
 - (void)controlCenterDidScrollToThisPage:(BOOL)arg1;
 - (BOOL)dismissModalFullScreenIfNeeded;
 @end
+
+@interface CCUIControlCenterPagePlatterView : UIView
+
+@property(retain, nonatomic) UIView *contentView;
+
+@end

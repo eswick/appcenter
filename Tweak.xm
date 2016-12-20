@@ -20,6 +20,14 @@
 
 #pragma mark Implementations
 
+@interface ACAppPageView : UIView
+
+@end
+
+@implementation ACAppPageView
+
+@end
+
 @interface ACAppPageViewController : UIViewController <CCUIControlCenterPageContentProviding>
 
 @property (nonatomic, retain) SBApplication *app;
@@ -93,7 +101,9 @@
 }
 
 - (void)loadView {
-  [super loadView];
+  ACAppPageView *pageView = [[ACAppPageView alloc] init];
+  self.view = pageView;
+  [pageView release];
 }
 
 - (void)viewWillAppear:(BOOL)arg1 {
@@ -158,6 +168,21 @@
 
 %hook CCUIControlCenterPagePlatterView
 
+- (void)layoutSubviews {
+  if ([self.contentView isKindOfClass:[ACAppPageView class]]) {
+    MSHookIvar<UIView*>(self, "_baseMaterialView").hidden = true;
+    MSHookIvar<UIView*>(self, "_whiteLayerView").hidden = true;
+  } else {
+    %orig;
+  }
+}
 
+- (void)_recursivelyVisitSubviewsOfView:(id)arg1 forPunchedThroughView:(id)arg2 collectingMasksIn:(id)arg3 {
+  if ([self.contentView isKindOfClass:[ACAppPageView class]]) {
+    return;
+  }
+
+  %orig;
+}
 
 %end
