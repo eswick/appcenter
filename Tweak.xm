@@ -1,140 +1,24 @@
 #pragma mark Includes & Defines
 
-
 #include <substrate.h>
 #define REQUESTER @"com.eswick.appcenter"
 
-
 #pragma mark Class Definitions
 
+#import "ControlCenterUI.h"
+#import "SpringBoard.h"
+#import "FrontBoard.h"
+#import "FrontBoardServices.h"
 
-@interface CCUIControlCenterViewController : NSObject
+@interface SBApplication ()
 
-- (void)_addContentViewController:(UIViewController*)arg1;
-
-@end
-
-@protocol CCUIControlCenterObserver
-- (void)controlCenterDidFinishTransition;
-- (void)controlCenterWillBeginTransition;
-- (void)controlCenterDidDismiss;
-- (void)controlCenterWillPresent;
-
-@optional
-- (void)controlCenterWillFinishTransitionOpen:(BOOL)arg1 withDuration:(NSTimeInterval)arg2;
-@end
-
-@protocol CCUIControlCenterPageContentProviding, CCUIControlCenterSystemAgent;
-@protocol CCUIControlCenterPageContentViewControllerDelegate
-- (void)endSuppressingPunchOutMaskCachingForReason:(NSString *)arg1;
-- (void)beginSuppressingPunchOutMaskCachingForReason:(NSString *)arg1;
-- (void)visibilityPreferenceChangedForContentViewController:(UIViewController<CCUIControlCenterPageContentProviding> *)arg1;
-- (long long)layoutStyle;
-- (id <CCUIControlCenterSystemAgent>)controlCenterSystemAgent;
-- (void)contentViewControllerWantsDismissal:(UIViewController<CCUIControlCenterPageContentProviding> *)arg1;
-@end
-
-@protocol CCUIControlCenterPageContentProviding <CCUIControlCenterObserver>
-@property (nonatomic, assign) id <CCUIControlCenterPageContentViewControllerDelegate> delegate;
-
-@optional
-@property(readonly, nonatomic) BOOL wantsVisible;
-@property(readonly, nonatomic) struct UIEdgeInsets contentInsets;
-- (void)controlCenterDidScrollToThisPage:(BOOL)arg1;
-- (BOOL)dismissModalFullScreenIfNeeded;
-@end
-
-@protocol FBSceneClientProvider
-- (void)endTransaction;
-- (void)beginTransaction;
-@end
-
-@interface FBSSceneSettings : NSObject <NSMutableCopying>
-
-@end
-
-@interface FBSMutableSceneSettings : FBSSceneSettings
-
-@property(nonatomic, getter=isBackgrounded) BOOL backgrounded;
-
-@end
-
-@interface FBSSettingsDiff : NSObject
-
-@end
-
-@interface FBSSceneSettingsDiff : FBSSettingsDiff
-
-+ (id)diffFromSettings:(id)arg1 toSettings:(id)arg2;
-
-@end
-
-@class FBSSceneTransitionContext;
-
-@protocol FBSceneClient
-- (void)host:(id/* <FBSceneHost>*/)arg1 didUpdateSettings:(FBSSceneSettings *)arg2 withDiff:(FBSSceneSettingsDiff *)arg3 transitionContext:(FBSSceneTransitionContext *)arg4 completion:(void (^)(BOOL))arg5;
-@end
-
-@interface FBSceneHostWrapperView : UIView
-
-@end
-
-@interface FBSceneHostManager : NSObject
-
-- (void)disableHostingForRequester:(NSString*)requester;
-- (FBSceneHostWrapperView*)hostViewForRequester:(NSString*)requester enableAndOrderFront:(BOOL)arg2;
-
-@end
-
-@interface FBScene : NSObject
-
-@property(readonly, retain, nonatomic) id <FBSceneClientProvider> clientProvider;
-@property(readonly, retain, nonatomic) id <FBSceneClient> client;
-@property(readonly, retain, nonatomic) FBSSceneSettings *settings;
-
-- (FBSceneHostManager*)contextHostManager;
-
-@end
-
-extern NSString* FBSOpenApplicationOptionKeyActivateSuspended;
-
-@interface FBSceneManager : NSObject
-
-+ (FBSceneManager*)sharedInstance;
-- (FBScene*)sceneWithIdentifier:(NSString*)identifier;
-
-@end
-
-@interface FBSSystemService : NSObject
-
-+ (id)sharedService;
-- (void)openApplication:(id)arg1 options:(id)arg2 withResult:(void (^)(void))arg3;
-
-@end
-
-@interface SBApplication : NSObject
-
-- (FBScene*)mainScene;
-- (NSString*)bundleIdentifier;
-- (BOOL)isRunning;
-
-// NEW
 - (void)appcenter_setBackgrounded:(BOOL)backgrounded withCompletion:(void (^)(BOOL))completion;
 - (void)appcenter_startBackgroundingWithCompletion:(void (^)(BOOL))completion;
 - (void)appcenter_stopBackgroundingWithCompletion:(void (^)(BOOL))completion;
 
 @end
 
-@interface SBApplicationController : NSObject
-
-+ (id)sharedInstance;
-- (SBApplication*)applicationWithBundleIdentifier:(NSString*)bundleIdentifier;
-
-@end
-
-
 #pragma mark Implementations
-
 
 @interface ACAppPageViewController : UIViewController <CCUIControlCenterPageContentProviding>
 
@@ -212,7 +96,6 @@ extern NSString* FBSOpenApplicationOptionKeyActivateSuspended;
 }
 
 @end
-
 
 #pragma mark Hooks
 
