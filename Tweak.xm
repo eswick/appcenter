@@ -49,24 +49,26 @@
 
 - (void)controlCenterWillFinishTransitionOpen:(BOOL)arg1 withDuration:(NSTimeInterval)arg2 {
   [self.app appcenter_startBackgroundingWithCompletion:^void(BOOL success) {
-    dispatch_async(dispatch_get_main_queue(), ^{
-      self.sceneHostManager = [[self.app mainScene] contextHostManager];
-      self.hostView = [self.sceneHostManager hostViewForRequester:REQUESTER enableAndOrderFront:true];
+    if (arg1) {
+      dispatch_async(dispatch_get_main_queue(), ^{
+        self.sceneHostManager = [[self.app mainScene] contextHostManager];
+        self.hostView = [self.sceneHostManager hostViewForRequester:REQUESTER enableAndOrderFront:true];
 
-      self.hostView.layer.cornerRadius = 10;
-      self.hostView.layer.masksToBounds = true;
+        self.hostView.layer.cornerRadius = 10;
+        self.hostView.layer.masksToBounds = true;
 
-      CGFloat scale = self.view.bounds.size.width / [[UIScreen mainScreen] bounds].size.width;
-      self.hostView.transform = CGAffineTransformMakeScale(scale, scale);
+        CGFloat scale = self.view.bounds.size.width / [[UIScreen mainScreen] bounds].size.width;
+        self.hostView.transform = CGAffineTransformMakeScale(scale, scale);
 
-      self.hostView.alpha = 0.0;
+        self.hostView.alpha = 0.0;
 
-      [self.view addSubview:self.hostView];
+        [self.view addSubview:self.hostView];
 
-      [UIView animateWithDuration:0.25 animations:^{
-        self.hostView.alpha = 1.0;
-      }];
-    });
+        [UIView animateWithDuration:0.25 animations:^{
+          self.hostView.alpha = 1.0;
+        }];
+      });
+    }
   }];
 }
 
@@ -147,12 +149,11 @@
 
 %hook CCUIControlCenterViewController
 
-- (id)init {
-  self = %orig;
-  if (self) {
-    [self _addContentViewController:[[ACAppPageViewController alloc] initWithBundleIdentifier:@"com.apple.mobilesafari"]];
-  }
-  return self;
+- (void)_loadPages {
+  %orig;
+  ACAppPageViewController *pageViewController = [[ACAppPageViewController alloc] initWithBundleIdentifier:@"com.apple.mobilesafari"];
+  [self _addContentViewController:pageViewController];
+  [pageViewController release];
 }
 
 %end
