@@ -63,7 +63,13 @@
         CGFloat scale = self.view.bounds.size.width / [[UIScreen mainScreen] bounds].size.width;
         self.hostView.transform = CGAffineTransformMakeScale(scale, scale);
 
+        self.hostView.alpha = 0.0;
+
         [self.view addSubview:self.hostView];
+
+        [UIView animateWithDuration:0.25 animations:^{
+          self.hostView.alpha = 1.0;
+        }];
       });
     }];
   }
