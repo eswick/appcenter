@@ -96,6 +96,8 @@
 
 @end
 
+extern NSString* FBSOpenApplicationOptionKeyActivateSuspended;
+
 @interface FBSceneManager : NSObject
 
 + (FBSceneManager*)sharedInstance;
@@ -103,15 +105,23 @@
 
 @end
 
+@interface FBSSystemService : NSObject
+
++ (id)sharedService;
+- (void)openApplication:(id)arg1 options:(id)arg2 withResult:(void (^)(void))arg3;
+
+@end
+
 @interface SBApplication : NSObject
 
 - (FBScene*)mainScene;
 - (NSString*)bundleIdentifier;
+- (BOOL)isRunning;
 
 // NEW
-- (void)appcenter_setBackgrounded:(BOOL)backgrounded;
-- (void)appcenter_startBackgrounding;
-- (void)appcenter_stopBackgrounding;
+- (void)appcenter_setBackgrounded:(BOOL)backgrounded withCompletion:(void (^)(BOOL))completion;
+- (void)appcenter_startBackgroundingWithCompletion:(void (^)(BOOL))completion;
+- (void)appcenter_stopBackgroundingWithCompletion:(void (^)(BOOL))completion;
 
 @end
 
@@ -132,6 +142,7 @@
 @property (nonatomic, assign) id <CCUIControlCenterPageContentViewControllerDelegate> delegate;
 @property (nonatomic, retain) FBSceneHostManager *sceneHostManager;
 @property (nonatomic, retain) FBSceneHostWrapperView *hostView;
+@property (nonatomic, assign) BOOL controlCenterOpening;
 
 - (id)initWithBundleIdentifier:(NSString*)bundleIdentifier;
 - (void)controlCenterDidFinishTransition;
@@ -155,6 +166,23 @@
 
 - (void)controlCenterDidFinishTransition {
 
+  if (self.controlCenterOpening) {
+    self.controlCenterOpening = false;
+    [self.app appcenter_startBackgroundingWithCompletion:^void(BOOL success) {
+      dispatch_async(dispatch_get_main_queue(), ^{
+        self.sceneHostManager = [[self.app mainScene] contextHostManager];
+        self.hostView = [self.sceneHostManager hostViewForRequester:REQUESTER enableAndOrderFront:true];
+
+        self.hostView.layer.cornerRadius = 10;
+        self.hostView.layer.masksToBounds = true;
+
+        CGFloat scale = self.view.bounds.size.width / [[UIScreen mainScreen] bounds].size.width;
+        self.hostView.transform = CGAffineTransformMakeScale(scale, scale);
+
+        [self.view addSubview:self.hostView];
+      });
+    }];
+  }
 }
 
 - (void)controlCenterWillBeginTransition {
@@ -163,24 +191,16 @@
 
 - (void)controlCenterDidDismiss {
   [self.sceneHostManager disableHostingForRequester:REQUESTER];
-  [self.app appcenter_stopBackgrounding];
+  [self.app appcenter_stopBackgroundingWithCompletion:nil];
 }
 
 - (void)controlCenterWillPresent {
-  [self.app appcenter_startBackgrounding];
-
-  self.sceneHostManager = [[self.app mainScene] contextHostManager];
-  self.hostView = [self.sceneHostManager hostViewForRequester:REQUESTER enableAndOrderFront:true];
-
-  CGFloat scale = self.view.bounds.size.width / [[UIScreen mainScreen] bounds].size.width;
-  scale -= 0.05;
-  self.hostView.transform = CGAffineTransformMakeScale(scale, scale);
-
-  [self.view addSubview:self.hostView];
+  self.controlCenterOpening = true;
 }
 
 - (void)viewWillLayoutSubviews {
-  self.hostView.center = CGPointMake(self.view.bounds.size.width / 2, self.view.bounds.size.height / 2);
+  CGPoint screenCenter = CGPointMake([UIScreen mainScreen].bounds.size.width / 2, [UIScreen mainScreen].bounds.size.height / 2);
+  self.hostView.center = [self.view convertPoint:screenCenter fromView:[[UIApplication sharedApplication] keyWindow]];
 }
 
 - (void)loadView {
@@ -199,7 +219,7 @@
 %hook SBApplication
 
 %new
-- (void)appcenter_setBackgrounded:(BOOL)backgrounded {
+- (void)appcenter_setBackgrounded:(BOOL)backgrounded withCompletion:(void (^)(BOOL))completion {
   FBSceneManager *sceneManager = [%c(FBSceneManager) sharedInstance];
   FBScene *scene = [sceneManager sceneWithIdentifier:[self bundleIdentifier]];
   id <FBSceneClientProvider> clientProvider = [scene clientProvider];
@@ -213,18 +233,26 @@
   FBSSceneSettingsDiff *settingsDiff = [%c(FBSSceneSettingsDiff) diffFromSettings:settings toSettings:mutableSettings];
 
   [clientProvider beginTransaction];
-  [client host:scene didUpdateSettings:mutableSettings withDiff:settingsDiff transitionContext:nil completion:nil];
+  [client host:scene didUpdateSettings:mutableSettings withDiff:settingsDiff transitionContext:nil completion:completion];
   [clientProvider endTransaction];
 }
 
 %new
-- (void)appcenter_startBackgrounding {
-  [self appcenter_setBackgrounded:false];
+- (void)appcenter_startBackgroundingWithCompletion:(void (^)(BOOL))completion {
+  if (![self isRunning]) {
+
+    [[%c(FBSSystemService) sharedService] openApplication:[self bundleIdentifier] options:@{ FBSOpenApplicationOptionKeyActivateSuspended : @true } withResult:^{
+      [self appcenter_setBackgrounded:false withCompletion:completion];
+    }];
+
+    return;
+  }
+  [self appcenter_setBackgrounded:false withCompletion:completion];
 }
 
 %new
-- (void)appcenter_stopBackgrounding {
-  [self appcenter_setBackgrounded:true];
+- (void)appcenter_stopBackgroundingWithCompletion:(void (^)(BOOL))completion {
+  [self appcenter_setBackgrounded:true withCompletion:completion];
 }
 
 %end

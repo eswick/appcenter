@@ -1,11 +1,11 @@
-TARGET = simulator:clang:10.1
+TARGET = simulator:clang
 ARCHS = x86_64 i386
 
 include $(THEOS)/makefiles/common.mk
 
 TWEAK_NAME = AppCenter
 AppCenter_FILES = Tweak.xm
-AppCenter_PRIVATE_FRAMEWORKS = ControlCenterUI
+AppCenter_PRIVATE_FRAMEWORKS = ControlCenterUI FrontBoardServices
 AppCenter_INSTALL_PATH = /opt/simject
 AppCenter_USE_SUBSTRATE = 1
 AppCenter_CFLAGS = -Iclassdefs
