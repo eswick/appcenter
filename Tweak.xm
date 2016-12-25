@@ -40,6 +40,123 @@
 
 @end
 
+
+@interface ACAppIconCell : UICollectionViewCell
+
+@property (nonatomic, retain) NSString *appIdentifier;
+@property (nonatomic, retain) UIImageView *imageView;
+
+- (void)loadIconForApplication:(NSString*)appIdentifier;
+
+@end
+
+@implementation ACAppIconCell
+
+- (id)initWithFrame:(CGRect)frame {
+  self = [super initWithFrame:frame];
+  if (self) {
+    self.imageView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, [%c(SBIconView) defaultIconImageSize].width, [%c(SBIconView) defaultIconImageSize].height)];
+    [self.contentView addSubview:self.imageView];
+    [self.imageView release];
+
+    CGPoint center = self.imageView.center;
+    center.x = self.bounds.size.width / 2;
+    self.imageView.center = center;
+  }
+  return self;
+}
+
+- (void)loadIconForApplication:(NSString*)appIdentifier {
+  self.appIdentifier = appIdentifier;
+
+  SBIconModel *iconModel = [(SBIconController*)[%c(SBIconController) sharedInstance] model];
+  SBIcon *icon = [iconModel expectedIconForDisplayIdentifier:appIdentifier];
+  int iconFormat = [icon iconFormatForLocation:0x0];
+
+  self.imageView.image = [icon getCachedIconImage:iconFormat];
+}
+
+@end
+
+@interface ACAppSelectionPageViewController : UIViewController <CCUIControlCenterPageContentProviding, UICollectionViewDelegate, UICollectionViewDataSource>
+
+@property (nonatomic, retain) UICollectionView *collectionView;
+@property (nonatomic, assign) id <CCUIControlCenterPageContentViewControllerDelegate> delegate;
+@property (nonatomic, assign) BOOL controlCenterIsOpening;
+
+@end
+
+@implementation ACAppSelectionPageViewController
+
+- (CGSize)defaultCellSize {
+  return CGSizeMake(75, 75);
+}
+
+- (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section {
+
+  int cellsPerRow = self.view.bounds.size.width / [self defaultCellSize].width;
+  int totalRows = self.view.bounds.size.height / [self defaultCellSize].height;
+
+  return MIN([[[%c(SBAppSwitcherModel) sharedInstance] mainSwitcherDisplayItems] count], cellsPerRow * totalRows);
+}
+
+- (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath {
+  ACAppIconCell *cell = (ACAppIconCell*)[self.collectionView dequeueReusableCellWithReuseIdentifier:@"AppIconCell" forIndexPath:indexPath];
+
+  NSString *appIdentifier = [[%c(SBAppSwitcherModel) sharedInstance] mainSwitcherDisplayItems][indexPath.row].displayIdentifier;
+  [cell loadIconForApplication:appIdentifier];
+
+  return cell;
+}
+
+- (UIEdgeInsets)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout*)collectionViewLayout insetForSectionAtIndex:(NSInteger)section {
+    return UIEdgeInsetsMake(0.0, 20.0, 0.0, 20.0);
+}
+
+- (void)loadView {
+
+  UICollectionViewFlowLayout *layout = [[UICollectionViewFlowLayout alloc] init];
+  layout.itemSize = [self defaultCellSize];
+
+  self.collectionView = [[UICollectionView alloc] initWithFrame:CGRectZero collectionViewLayout:layout];
+
+  self.collectionView.delegate = self;
+  self.collectionView.dataSource = self;
+
+  self.collectionView.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
+  self.collectionView.translatesAutoresizingMaskIntoConstraints = true;
+  self.collectionView.backgroundColor = [UIColor clearColor];
+
+  [self.collectionView registerClass:[ACAppIconCell class] forCellWithReuseIdentifier:@"AppIconCell"];
+  self.view = self.collectionView;
+
+  [layout release];
+}
+
+- (void)viewWillLayoutSubviews {
+
+}
+
+- (void)controlCenterWillPresent {
+  self.controlCenterIsOpening = true;
+}
+
+- (void)controlCenterDidFinishTransition {
+  self.controlCenterIsOpening = false;
+}
+
+- (void)controlCenterWillBeginTransition {
+  if (self.controlCenterIsOpening) {
+    [self.collectionView reloadData];
+  }
+}
+
+- (void)controlCenterDidDismiss {
+
+}
+
+@end
+
 @implementation ACAppPageViewController
 @synthesize delegate;
 
@@ -159,7 +276,7 @@
 
 - (void)_loadPages {
   %orig;
-  ACAppPageViewController *pageViewController = [[ACAppPageViewController alloc] initWithBundleIdentifier:@"com.apple.mobilesafari"];
+  ACAppSelectionPageViewController *pageViewController = [[ACAppSelectionPageViewController alloc] initWithNibName:nil bundle:nil];
   [self _addContentViewController:pageViewController];
   [pageViewController release];
 }
