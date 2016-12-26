@@ -3,6 +3,13 @@
 @interface CCUIControlCenterViewController : NSObject
 
 - (void)_addContentViewController:(UIViewController*)arg1;
+- (void)_removeContentViewController:(UIViewController*)arg1;
+- (void)_loadPages;
+- (id)contentViewControllers;
+- (void)_updatePageControl;
+- (void)_updateScrollViewContentSize;
+- (void)_layoutScrollView;
+- (void)controlCenterWillPresent;
 
 @end
 

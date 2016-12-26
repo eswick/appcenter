@@ -18,6 +18,12 @@
 
 @end
 
+@interface CCUIControlCenterViewController ()
+
+- (void)appcenter_appSelected:(NSString*)bundleIdentifier;
+
+@end
+
 #pragma mark Implementations
 
 @interface ACAppPageView : UIView
@@ -111,6 +117,19 @@
 
 - (UIEdgeInsets)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout*)collectionViewLayout insetForSectionAtIndex:(NSInteger)section {
     return UIEdgeInsetsMake(0.0, 20.0, 0.0, 20.0);
+}
+
+- (BOOL)collectionView:(UICollectionView *)collectionView shouldSelectItemAtIndexPath:(NSIndexPath *)indexPath {
+    return YES;
+}
+
+- (BOOL)collectionView:(UICollectionView *)collectionView shouldHighlightItemAtIndexPath:(NSIndexPath *)indexPath {
+    return YES;
+}
+
+- (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath {
+  CCUIControlCenterViewController *ccViewController = (CCUIControlCenterViewController*)self.parentViewController.parentViewController;
+  [ccViewController appcenter_appSelected:[[%c(SBAppSwitcherModel) sharedInstance] mainSwitcherDisplayItems][indexPath.row].displayIdentifier];
 }
 
 - (void)loadView {
@@ -274,11 +293,46 @@
 
 %hook CCUIControlCenterViewController
 
+static NSMutableArray<NSString*> *appPages = nil; // TODO: Make this an instance variable with associated objects
+
 - (void)_loadPages {
   %orig;
   ACAppSelectionPageViewController *pageViewController = [[ACAppSelectionPageViewController alloc] initWithNibName:nil bundle:nil];
   [self _addContentViewController:pageViewController];
   [pageViewController release];
+}
+
+%new
+- (void)appcenter_appSelected:(NSString*)bundleIdentifier {
+  if (!appPages) {
+    appPages = [NSMutableArray new];
+  }
+
+  for (UIViewController *contentViewController in [self contentViewControllers]) {
+    if ([contentViewController isKindOfClass:[ACAppSelectionPageViewController class]]) {
+
+      [UIView animateWithDuration:0.25 animations:^{
+        contentViewController.view.alpha = 0;
+      } completion:^(BOOL completed){
+        [self _removeContentViewController:contentViewController];
+
+        contentViewController.view.alpha = 1;
+
+        SBApplication *application = [[%c(SBApplicationController) sharedInstance] applicationWithBundleIdentifier:bundleIdentifier];
+        [application appcenter_startBackgroundingWithCompletion:^(BOOL success){
+          dispatch_async(dispatch_get_main_queue(), ^{
+            [self _addContentViewController:[[ACAppPageViewController alloc] initWithBundleIdentifier:bundleIdentifier]];
+            [self _addContentViewController:contentViewController];
+
+            [self controlCenterWillPresent];
+          });
+        }];
+      }];
+
+      [appPages addObject:bundleIdentifier];
+      break;
+    }
+  }
 }
 
 %end
