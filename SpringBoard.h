@@ -55,3 +55,9 @@
 + (CGSize)defaultIconImageSize;
 
 @end
+
+@interface SpringBoard : UIApplication
+
+- (SBApplication*)_accessibilityFrontMostApplication;
+
+@end

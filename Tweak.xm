@@ -10,6 +10,12 @@
 #import "FrontBoard.h"
 #import "FrontBoardServices.h"
 
+@interface SBAppSwitcherModel ()
+
+- (NSArray<NSString*>*)appcenter_model;
+
+@end
+
 @interface SBApplication ()
 
 - (void)appcenter_setBackgrounded:(BOOL)backgrounded withCompletion:(void (^)(BOOL))completion;
@@ -103,13 +109,13 @@
   int cellsPerRow = self.view.bounds.size.width / [self defaultCellSize].width;
   int totalRows = self.view.bounds.size.height / [self defaultCellSize].height;
 
-  return MIN([[[%c(SBAppSwitcherModel) sharedInstance] mainSwitcherDisplayItems] count], cellsPerRow * totalRows);
+  return MIN([[[%c(SBAppSwitcherModel) sharedInstance] appcenter_model] count], cellsPerRow * totalRows);
 }
 
 - (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath {
   ACAppIconCell *cell = (ACAppIconCell*)[self.collectionView dequeueReusableCellWithReuseIdentifier:@"AppIconCell" forIndexPath:indexPath];
 
-  NSString *appIdentifier = [[%c(SBAppSwitcherModel) sharedInstance] mainSwitcherDisplayItems][indexPath.row].displayIdentifier;
+  NSString *appIdentifier = [[%c(SBAppSwitcherModel) sharedInstance] appcenter_model][indexPath.row];
   [cell loadIconForApplication:appIdentifier];
 
   return cell;
@@ -129,7 +135,7 @@
 
 - (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath {
   CCUIControlCenterViewController *ccViewController = (CCUIControlCenterViewController*)self.parentViewController.parentViewController;
-  [ccViewController appcenter_appSelected:[[%c(SBAppSwitcherModel) sharedInstance] mainSwitcherDisplayItems][indexPath.row].displayIdentifier];
+  [ccViewController appcenter_appSelected:[[%c(SBAppSwitcherModel) sharedInstance] appcenter_model][indexPath.row]];
 }
 
 - (void)loadView {
@@ -308,13 +314,16 @@ static NSMutableArray<NSString*> *appPages = nil; // TODO: Make this an instance
     appPages = [NSMutableArray new];
   }
 
+  [appPages addObject:bundleIdentifier];
+
   for (UIViewController *contentViewController in [self contentViewControllers]) {
     if ([contentViewController isKindOfClass:[ACAppSelectionPageViewController class]]) {
-
       [UIView animateWithDuration:0.25 animations:^{
         contentViewController.view.alpha = 0;
       } completion:^(BOOL completed){
         [self _removeContentViewController:contentViewController];
+
+        [[(ACAppSelectionPageViewController*)contentViewController collectionView] reloadData];
 
         contentViewController.view.alpha = 1;
 
@@ -329,7 +338,6 @@ static NSMutableArray<NSString*> *appPages = nil; // TODO: Make this an instance
         }];
       }];
 
-      [appPages addObject:bundleIdentifier];
       break;
     }
   }
@@ -354,6 +362,34 @@ static NSMutableArray<NSString*> *appPages = nil; // TODO: Make this an instance
   }
 
   %orig;
+}
+
+%end
+
+%hook SBAppSwitcherModel
+
+%new
+- (NSArray<NSString*>*)appcenter_model {
+  NSArray<SBDisplayItem*>* model = [self mainSwitcherDisplayItems];
+  NSMutableArray<NSString*> *filteredModel = [NSMutableArray new];
+
+  for (SBDisplayItem *item in model) {
+    if ([item.displayIdentifier isEqualToString:[[(SpringBoard*)[UIApplication sharedApplication] _accessibilityFrontMostApplication] bundleIdentifier]]) {
+      continue;
+    }
+
+    for (NSString *bundleIdentifier in appPages) {
+      if ([item.displayIdentifier isEqualToString:bundleIdentifier]) {
+        goto skip;
+      }
+    }
+
+    [filteredModel addObject:[item displayIdentifier]];
+skip:
+    continue;
+  }
+
+  return [filteredModel autorelease];
 }
 
 %end
