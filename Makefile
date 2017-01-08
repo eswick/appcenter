@@ -1,14 +1,21 @@
+
+ifdef SIMULATOR
 TARGET = simulator:clang
 ARCHS = x86_64 i386
+else
+TARGET = iphone:latest
+ARCHS = armv7 arm64
+endif
 
 include $(THEOS)/makefiles/common.mk
 
 TWEAK_NAME = AppCenter
 AppCenter_FILES = Tweak.xm
 AppCenter_PRIVATE_FRAMEWORKS = ControlCenterUI FrontBoardServices
+
+ifdef SIMULATOR
 AppCenter_INSTALL_PATH = /opt/simject
-AppCenter_USE_SUBSTRATE = 1
-AppCenter_CFLAGS = -Iclassdefs
+endif
 
 include $(THEOS_MAKE_PATH)/tweak.mk
 
