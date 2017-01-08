@@ -1,6 +1,6 @@
 #include <UIKit/UIKit.h>
 
-@interface CCUIControlCenterViewController : NSObject
+@interface CCUIControlCenterViewController : UIViewController
 
 - (void)_addContentViewController:(UIViewController*)arg1;
 - (void)_removeContentViewController:(UIViewController*)arg1;
@@ -10,6 +10,9 @@
 - (void)_updateScrollViewContentSize;
 - (void)_layoutScrollView;
 - (void)controlCenterWillPresent;
+- (void)scrollViewDidEndDecelerating:(id)arg1;
+- (id)sortedVisibleViewControllers;
+- (void)_addOrRemovePagesBasedOnVisibility;
 
 @end
 
@@ -47,4 +50,8 @@
 
 @property(retain, nonatomic) UIView *contentView;
 
+@end
+
+@interface CCUIControlCenterPageContainerViewController : UIViewController
+@property(readonly, nonatomic) UIViewController<CCUIControlCenterPageContentProviding> *contentViewController;
 @end

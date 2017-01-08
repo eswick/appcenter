@@ -328,12 +328,14 @@ static NSMutableArray<NSString*> *appPages = nil; // TODO: Make this an instance
         contentViewController.view.alpha = 1;
 
         SBApplication *application = [[%c(SBApplicationController) sharedInstance] applicationWithBundleIdentifier:bundleIdentifier];
-        [application appcenter_startBackgroundingWithCompletion:^(BOOL success){
+        [application appcenter_startBackgroundingWithCompletion:^(BOOL success) {
           dispatch_async(dispatch_get_main_queue(), ^{
-            [self _addContentViewController:[[ACAppPageViewController alloc] initWithBundleIdentifier:bundleIdentifier]];
+            ACAppPageViewController *appPage = [[ACAppPageViewController alloc] initWithBundleIdentifier:bundleIdentifier];
+            [self _addContentViewController:appPage];
             [self _addContentViewController:contentViewController];
 
             [self controlCenterWillPresent];
+            MSHookIvar<UIViewController*>(self, "_selectedViewController") = appPage;
           });
         }];
       }];
@@ -341,6 +343,17 @@ static NSMutableArray<NSString*> *appPages = nil; // TODO: Make this an instance
       break;
     }
   }
+}
+
+- (void)_updatePageControl {
+  if ([MSHookIvar<UIViewController*>(self, "_selectedViewController") isKindOfClass:[ACAppPageViewController class]]) {
+    for (CCUIControlCenterPageContainerViewController *viewController in [self sortedVisibleViewControllers]) {
+      if (viewController.contentViewController == MSHookIvar<UIViewController*>(self, "_selectedViewController")) {
+        MSHookIvar<UIViewController*>(self, "_selectedViewController") = viewController;
+      }
+    }
+  }
+  %orig;
 }
 
 %end
