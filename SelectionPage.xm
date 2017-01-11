@@ -47,11 +47,11 @@
     center.x = self.bounds.size.width / 2;
     self.imageView.center = center;
 
-    self.titleLabel = [[CCUIControlCenterLabel alloc] initWithFrame:CGRectZero];
-    self.titleLabel.textColor = [UIColor blackColor];
+    self.titleLabel = [[UILabel alloc] initWithFrame:CGRectZero];
+    self.titleLabel.textColor = [UIColor whiteColor];
     self.titleLabel.textAlignment = NSTextAlignmentCenter;
     self.titleLabel.adjustsFontSizeToFitWidth = false;
-    self.titleLabel.font = [UIFont systemFontOfSize:13];
+    self.titleLabel.font = [UIFont systemFontOfSize:12];
     self.titleLabel.translatesAutoresizingMaskIntoConstraints = false;
 
     [self.button addSubview:self.titleLabel];
@@ -68,6 +68,14 @@
 
 - (void)buttonTapped:(CCUIControlCenterButton *)arg1 {
   [self.delegate appIconCell:self stateChanged:[arg1 _currentState]];
+}
+
+- (void)button:(CCUIControlCenterButton *)arg1 didChangeState:(long long)arg2 {
+  if (arg2 == 0) {
+    self.titleLabel.textColor = [UIColor whiteColor];
+  } else {
+    self.titleLabel.textColor = [UIColor blackColor];
+  }
 }
 
 - (BOOL)isInternal {
