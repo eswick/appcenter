@@ -185,6 +185,8 @@ static NSMutableArray<NSString*> *appPages = nil; // TODO: Make this an instance
 
             [self controlCenterWillPresent];
             MSHookIvar<UIViewController*>(self, "_selectedViewController") = appPage;
+
+            [[(ACAppSelectionPageViewController*)contentViewController gridViewController] fixButtonEffects];
           });
         }];
       }];

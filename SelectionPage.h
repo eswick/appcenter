@@ -16,6 +16,7 @@
 @property (nonatomic, retain) NSString *appIdentifier;
 @property (nonatomic, retain) UIImageView *imageView;
 @property (nonatomic, retain) UILabel *titleLabel;
+@property (nonatomic, retain) CCUIControlCenterButton *button;
 @property (nonatomic, assign) id<ACAppIconCellDelegate> delegate;
 
 - (void)loadIconForApplication:(NSString*)appIdentifier;
@@ -23,6 +24,8 @@
 @end
 
 @interface ACAppSelectionGridViewController : UICollectionViewController <ACAppIconCellDelegate>
+
+- (void)fixButtonEffects;
 
 @end
 

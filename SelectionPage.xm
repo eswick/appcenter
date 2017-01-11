@@ -26,20 +26,20 @@
 
     self.contentView.layer.cornerRadius = 12;
 
-    CCUIControlCenterButton *button = [CCUIControlCenterButton roundRectButton];
+    self.button = [CCUIControlCenterButton roundRectButton];
 
-    button.delegate = self;
-    button.animatesStateChanges = true;
-    button.translatesAutoresizingMaskIntoConstraints = false;
+    self.button.delegate = self;
+    self.button.animatesStateChanges = true;
+    self.button.translatesAutoresizingMaskIntoConstraints = false;
 
-    [self.contentView addSubview:button];
+    [self.contentView addSubview:self.button];
 
-    [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[button]|" options:nil metrics:nil views:@{ @"button" : button }]];
-    [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[button]|" options:nil metrics:nil views:@{ @"button" : button }]];
+    [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[button]|" options:nil metrics:nil views:@{ @"button" : self.button }]];
+    [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[button]|" options:nil metrics:nil views:@{ @"button" : self.button }]];
 
     self.imageView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, [%c(SBIconView) defaultIconImageSize].width * 0.80, [%c(SBIconView) defaultIconImageSize].height * 0.80)];
     self.imageView.center = CGPointMake(self.contentView.bounds.size.width / 2, (self.contentView.bounds.size.height * 0.80) / 2);
-    [button addSubview:self.imageView];
+    [self.button addSubview:self.imageView];
     [self.imageView release];
 
     CGPoint center = self.imageView.center;
@@ -53,7 +53,7 @@
     self.titleLabel.font = [UIFont systemFontOfSize:13];
     self.titleLabel.translatesAutoresizingMaskIntoConstraints = false;
 
-    [button addSubview:self.titleLabel];
+    [self.button addSubview:self.titleLabel];
 
     [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[label]|" options:nil metrics:nil views:@{ @"label" : self.titleLabel }]];
     [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:[imageView][label]|" options:nil metrics:nil views:@{ @"label" : self.titleLabel, @"imageView" : self.imageView }]];
@@ -126,6 +126,12 @@
   self.view = self.collectionView;
 
   [layout release];
+}
+
+- (void)fixButtonEffects {
+  if ([self collectionView:self.collectionView numberOfItemsInSection:0] > 0) {
+    [[(ACAppIconCell*)[self collectionView:self.collectionView cellForItemAtIndexPath:[NSIndexPath indexPathForRow:0 inSection:0]] button] _updateEffects];
+  }
 }
 
 @end
