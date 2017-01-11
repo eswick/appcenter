@@ -7,23 +7,18 @@
 
 @end
 
-@protocol ACAppIconCellDelegate
-- (void)appIconCell:(ACAppIconCell *)arg1 stateChanged:(long long)arg2;
-@end
-
 @interface ACAppIconCell : UICollectionViewCell <CCUIControlCenterButtonDelegate>
 
 @property (nonatomic, retain) NSString *appIdentifier;
 @property (nonatomic, retain) UIImageView *imageView;
 @property (nonatomic, retain) UILabel *titleLabel;
 @property (nonatomic, retain) CCUIControlCenterButton *button;
-@property (nonatomic, assign) id<ACAppIconCellDelegate> delegate;
 
 - (void)configureForApplication:(NSString*)appIdentifier;
 
 @end
 
-@interface ACAppSelectionGridViewController : UICollectionViewController <ACAppIconCellDelegate>
+@interface ACAppSelectionGridViewController : UICollectionViewController
 
 - (void)fixButtonEffects;
 

@@ -30,6 +30,7 @@
     self.button = [CCUIControlCenterButton roundRectButton];
 
     self.button.delegate = self;
+    self.button.userInteractionEnabled = false;
     self.button.animatesStateChanges = true;
     self.button.translatesAutoresizingMaskIntoConstraints = false;
 
@@ -67,7 +68,7 @@
 }
 
 - (void)buttonTapped:(CCUIControlCenterButton *)arg1 {
-  [self.delegate appIconCell:self stateChanged:[arg1 _currentState]];
+
 }
 
 - (void)button:(CCUIControlCenterButton *)arg1 didChangeState:(long long)arg2 {
@@ -111,8 +112,6 @@
 - (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath {
   ACAppIconCell *cell = (ACAppIconCell*)[self.collectionView dequeueReusableCellWithReuseIdentifier:@"AppIconCell" forIndexPath:indexPath];
 
-  cell.delegate = self;
-
   NSString *appIdentifier = nil;
 
   if (indexPath.row < appPages.count) {
@@ -126,9 +125,30 @@
   return cell;
 }
 
-- (void)appIconCell:(ACAppIconCell*)appIconCell stateChanged:(long long)state {
+- (BOOL)collectionView:(UICollectionView *)collectionView shouldSelectItemAtIndexPath:(NSIndexPath *)indexPath {
+    return YES;
+}
+
+- (BOOL)collectionView:(UICollectionView *)collectionView shouldHighlightItemAtIndexPath:(NSIndexPath *)indexPath {
+    return YES;
+}
+
+- (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath {
   CCUIControlCenterViewController *ccViewController = (CCUIControlCenterViewController*)self.parentViewController.parentViewController.parentViewController;
-  [ccViewController appcenter_appSelected:appIconCell.appIdentifier];
+
+  NSString *appIdentifier = nil;
+
+  ACAppIconCell *cell = (ACAppIconCell*)[self.collectionView cellForItemAtIndexPath:indexPath];
+
+  if (indexPath.row < appPages.count) {
+    appIdentifier = appPages[indexPath.row];
+    cell.button.selected = false;
+  } else {
+    appIdentifier = [[%c(SBAppSwitcherModel) sharedInstance] appcenter_model][indexPath.row - appPages.count];
+    cell.button.selected = true;
+  }
+
+  [ccViewController appcenter_appSelected:appIdentifier];
 }
 
 - (void)loadView {
