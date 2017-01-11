@@ -1,6 +1,7 @@
 #import "SelectionPage.h"
 #import "SpringBoard.h"
 #import "Tweak.h"
+#import "UIImage+Tint.h"
 
 @implementation ACIconButton
 
@@ -91,6 +92,7 @@
   int iconFormat = [icon iconFormatForLocation:0];
 
   self.imageView.image = [icon getCachedIconImage:iconFormat];
+  self.imageView.highlightedImage = [self.imageView.image tintedImageUsingColor:[UIColor colorWithWhite:0.0 alpha:0.3]];
 
   self.titleLabel.text = [[[%c(SBApplicationController) sharedInstance] applicationWithBundleIdentifier:self.appIdentifier] displayName];
 
@@ -131,6 +133,16 @@
 
 - (BOOL)collectionView:(UICollectionView *)collectionView shouldHighlightItemAtIndexPath:(NSIndexPath *)indexPath {
     return YES;
+}
+
+-(void)collectionView:(UICollectionView *)collectionView didHighlightItemAtIndexPath:(NSIndexPath *)indexPath {
+  ACAppIconCell *cell = (ACAppIconCell*)[self.collectionView cellForItemAtIndexPath:indexPath];
+  cell.imageView.highlighted = true;
+}
+
+-(void)collectionView:(UICollectionView *)collectionView didUnhighlightItemAtIndexPath:(NSIndexPath *)indexPath {
+  ACAppIconCell *cell = (ACAppIconCell*)[self.collectionView cellForItemAtIndexPath:indexPath];
+  cell.imageView.highlighted = false;
 }
 
 - (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath {

@@ -10,7 +10,7 @@ endif
 include $(THEOS)/makefiles/common.mk
 
 TWEAK_NAME = AppCenter
-AppCenter_FILES = Tweak.xm SelectionPage.xm
+AppCenter_FILES = Tweak.xm SelectionPage.xm UIImage+Tint.m
 AppCenter_PRIVATE_FRAMEWORKS = ControlCenterUI ControlCenterUIKit FrontBoardServices
 
 ifdef SIMULATOR
