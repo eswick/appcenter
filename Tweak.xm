@@ -3,32 +3,11 @@
 #include <substrate.h>
 #define REQUESTER @"com.eswick.appcenter"
 
-#pragma mark Class Definitions
-
 #import "ControlCenterUI.h"
 #import "SpringBoard.h"
 #import "FrontBoard.h"
 #import "FrontBoardServices.h"
-
-@interface SBAppSwitcherModel ()
-
-- (NSArray<NSString*>*)appcenter_model;
-
-@end
-
-@interface SBApplication ()
-
-- (void)appcenter_setBackgrounded:(BOOL)backgrounded withCompletion:(void (^)(BOOL))completion;
-- (void)appcenter_startBackgroundingWithCompletion:(void (^)(BOOL))completion;
-- (void)appcenter_stopBackgroundingWithCompletion:(void (^)(BOOL))completion;
-
-@end
-
-@interface CCUIControlCenterViewController ()
-
-- (void)appcenter_appSelected:(NSString*)bundleIdentifier;
-
-@end
+#import "SelectionPage.h"
 
 #pragma mark Implementations
 
@@ -49,136 +28,6 @@
 
 - (id)initWithBundleIdentifier:(NSString*)bundleIdentifier;
 - (void)controlCenterDidFinishTransition;
-
-@end
-
-
-@interface ACAppIconCell : UICollectionViewCell
-
-@property (nonatomic, retain) NSString *appIdentifier;
-@property (nonatomic, retain) UIImageView *imageView;
-
-- (void)loadIconForApplication:(NSString*)appIdentifier;
-
-@end
-
-@implementation ACAppIconCell
-
-- (id)initWithFrame:(CGRect)frame {
-  self = [super initWithFrame:frame];
-  if (self) {
-    self.imageView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, [%c(SBIconView) defaultIconImageSize].width, [%c(SBIconView) defaultIconImageSize].height)];
-    [self.contentView addSubview:self.imageView];
-    [self.imageView release];
-
-    CGPoint center = self.imageView.center;
-    center.x = self.bounds.size.width / 2;
-    self.imageView.center = center;
-  }
-  return self;
-}
-
-- (void)loadIconForApplication:(NSString*)appIdentifier {
-  self.appIdentifier = appIdentifier;
-
-  SBIconModel *iconModel = [(SBIconController*)[%c(SBIconController) sharedInstance] model];
-  SBIcon *icon = [iconModel expectedIconForDisplayIdentifier:appIdentifier];
-  int iconFormat = [icon iconFormatForLocation:0x0];
-
-  self.imageView.image = [icon getCachedIconImage:iconFormat];
-}
-
-@end
-
-@interface ACAppSelectionPageViewController : UIViewController <CCUIControlCenterPageContentProviding, UICollectionViewDelegate, UICollectionViewDataSource>
-
-@property (nonatomic, retain) UICollectionView *collectionView;
-@property (nonatomic, assign) id <CCUIControlCenterPageContentViewControllerDelegate> delegate;
-@property (nonatomic, assign) BOOL controlCenterIsOpening;
-
-@end
-
-@implementation ACAppSelectionPageViewController
-
-- (CGSize)defaultCellSize {
-  return CGSizeMake(75, 75);
-}
-
-- (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section {
-
-  int cellsPerRow = self.view.bounds.size.width / [self defaultCellSize].width;
-  int totalRows = self.view.bounds.size.height / [self defaultCellSize].height;
-
-  return MIN([[[%c(SBAppSwitcherModel) sharedInstance] appcenter_model] count], cellsPerRow * totalRows);
-}
-
-- (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath {
-  ACAppIconCell *cell = (ACAppIconCell*)[self.collectionView dequeueReusableCellWithReuseIdentifier:@"AppIconCell" forIndexPath:indexPath];
-
-  NSString *appIdentifier = [[%c(SBAppSwitcherModel) sharedInstance] appcenter_model][indexPath.row];
-  [cell loadIconForApplication:appIdentifier];
-
-  return cell;
-}
-
-- (UIEdgeInsets)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout*)collectionViewLayout insetForSectionAtIndex:(NSInteger)section {
-    return UIEdgeInsetsMake(0.0, 20.0, 0.0, 20.0);
-}
-
-- (BOOL)collectionView:(UICollectionView *)collectionView shouldSelectItemAtIndexPath:(NSIndexPath *)indexPath {
-    return YES;
-}
-
-- (BOOL)collectionView:(UICollectionView *)collectionView shouldHighlightItemAtIndexPath:(NSIndexPath *)indexPath {
-    return YES;
-}
-
-- (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath {
-  CCUIControlCenterViewController *ccViewController = (CCUIControlCenterViewController*)self.parentViewController.parentViewController;
-  [ccViewController appcenter_appSelected:[[%c(SBAppSwitcherModel) sharedInstance] appcenter_model][indexPath.row]];
-}
-
-- (void)loadView {
-
-  UICollectionViewFlowLayout *layout = [[UICollectionViewFlowLayout alloc] init];
-  layout.itemSize = [self defaultCellSize];
-
-  self.collectionView = [[UICollectionView alloc] initWithFrame:CGRectZero collectionViewLayout:layout];
-
-  self.collectionView.delegate = self;
-  self.collectionView.dataSource = self;
-
-  self.collectionView.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
-  self.collectionView.translatesAutoresizingMaskIntoConstraints = true;
-  self.collectionView.backgroundColor = [UIColor clearColor];
-
-  [self.collectionView registerClass:[ACAppIconCell class] forCellWithReuseIdentifier:@"AppIconCell"];
-  self.view = self.collectionView;
-
-  [layout release];
-}
-
-- (void)viewWillLayoutSubviews {
-
-}
-
-- (void)controlCenterWillPresent {
-  self.controlCenterIsOpening = true;
-}
-
-- (void)controlCenterDidFinishTransition {
-  self.controlCenterIsOpening = false;
-}
-
-- (void)controlCenterWillBeginTransition {
-  if (self.controlCenterIsOpening) {
-    [self.collectionView reloadData];
-  }
-}
-
-- (void)controlCenterDidDismiss {
-
-}
 
 @end
 
@@ -320,10 +169,10 @@ static NSMutableArray<NSString*> *appPages = nil; // TODO: Make this an instance
     if ([contentViewController isKindOfClass:[ACAppSelectionPageViewController class]]) {
       [UIView animateWithDuration:0.25 animations:^{
         contentViewController.view.alpha = 0;
-      } completion:^(BOOL completed){
+      } completion:^(BOOL completed) {
         [self _removeContentViewController:contentViewController];
 
-        [[(ACAppSelectionPageViewController*)contentViewController collectionView] reloadData];
+        [[[(ACAppSelectionPageViewController*)contentViewController gridViewController] collectionView] reloadData];
 
         contentViewController.view.alpha = 1;
 

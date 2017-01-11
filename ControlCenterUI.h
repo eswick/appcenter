@@ -55,3 +55,19 @@
 @interface CCUIControlCenterPageContainerViewController : UIViewController
 @property(readonly, nonatomic) UIViewController<CCUIControlCenterPageContentProviding> *contentViewController;
 @end
+
+@class CCUIControlCenterButton;
+
+@protocol CCUIControlCenterButtonDelegate
+- (BOOL)isInternal;
+- (void)buttonTapped:(CCUIControlCenterButton *)arg1;
+
+@optional
+- (void)button:(CCUIControlCenterButton *)arg1 didChangeState:(long long)arg2;
+@end
+
+@interface CCUIControlCenterViewController (AppCenter)
+
+- (void)appcenter_appSelected:(NSString*)bundleIdentifier;
+
+@end

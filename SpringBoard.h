@@ -5,6 +5,7 @@
 - (FBScene*)mainScene;
 - (NSString*)bundleIdentifier;
 - (BOOL)isRunning;
+- (NSString*)displayName;
 
 @end
 
@@ -59,5 +60,19 @@
 @interface SpringBoard : UIApplication
 
 - (SBApplication*)_accessibilityFrontMostApplication;
+
+@end
+
+@interface SBAppSwitcherModel (AppCenter)
+
+- (NSArray<NSString*>*)appcenter_model;
+
+@end
+
+@interface SBApplication (AppCenter)
+
+- (void)appcenter_setBackgrounded:(BOOL)backgrounded withCompletion:(void (^)(BOOL))completion;
+- (void)appcenter_startBackgroundingWithCompletion:(void (^)(BOOL))completion;
+- (void)appcenter_stopBackgroundingWithCompletion:(void (^)(BOOL))completion;
 
 @end
