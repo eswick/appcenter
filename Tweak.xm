@@ -8,6 +8,7 @@
 #import "FrontBoard.h"
 #import "FrontBoardServices.h"
 #import "SelectionPage.h"
+#import "Tweak.h"
 
 #pragma mark Implementations
 
@@ -146,15 +147,16 @@
 
 %end
 
-%hook CCUIControlCenterViewController
+ACAppSelectionPageViewController *selectionViewController = nil;
+NSMutableArray<NSString*> *appPages = nil;
 
-static NSMutableArray<NSString*> *appPages = nil; // TODO: Make this an instance variable with associated objects
+%hook CCUIControlCenterViewController
 
 - (void)_loadPages {
   %orig;
-  ACAppSelectionPageViewController *pageViewController = [[ACAppSelectionPageViewController alloc] initWithNibName:nil bundle:nil];
-  [self _addContentViewController:pageViewController];
-  [pageViewController release];
+  selectionViewController = [[ACAppSelectionPageViewController alloc] initWithNibName:nil bundle:nil];
+  [self _addContentViewController:selectionViewController];
+  [selectionViewController release];
 }
 
 %new
@@ -163,37 +165,59 @@ static NSMutableArray<NSString*> *appPages = nil; // TODO: Make this an instance
     appPages = [NSMutableArray new];
   }
 
+  if ([appPages containsObject:bundleIdentifier]) {
+
+    for (UIViewController *contentViewController in [self contentViewControllers]) {
+      if ([contentViewController isKindOfClass:[ACAppPageViewController class]]) {
+        if ([[[(ACAppPageViewController*)contentViewController app] bundleIdentifier] isEqualToString:bundleIdentifier]) {
+
+          ACAppPageViewController *appPageViewController = (ACAppPageViewController*)contentViewController;
+
+          [[appPageViewController app] appcenter_stopBackgroundingWithCompletion:nil];
+
+          [appPageViewController.sceneHostManager disableHostingForRequester:REQUESTER];
+
+          [self _removeContentViewController:contentViewController];
+          [appPages removeObject:bundleIdentifier];
+          [self controlCenterWillPresent];
+
+          [[[selectionViewController gridViewController] collectionView] performBatchUpdates:^{
+            [[[selectionViewController gridViewController] collectionView] reloadSections:[NSIndexSet indexSetWithIndex:0]];
+          } completion:^(BOOL finished) {
+            [[selectionViewController gridViewController] fixButtonEffects];
+          }];
+        }
+      }
+    }
+
+    return;
+  }
+
   [appPages addObject:bundleIdentifier];
 
-  for (UIViewController *contentViewController in [self contentViewControllers]) {
-    if ([contentViewController isKindOfClass:[ACAppSelectionPageViewController class]]) {
-      [UIView animateWithDuration:0.25 animations:^{
-        contentViewController.view.alpha = 0;
-      } completion:^(BOOL completed) {
-        [self _removeContentViewController:contentViewController];
+  [UIView animateWithDuration:0.25 animations:^{
+    selectionViewController.view.alpha = 0;
+  } completion:^(BOOL completed) {
+    [self _removeContentViewController:selectionViewController];
 
-        [[[(ACAppSelectionPageViewController*)contentViewController gridViewController] collectionView] reloadData];
+    [[[selectionViewController gridViewController] collectionView] reloadData];
 
-        contentViewController.view.alpha = 1;
+    selectionViewController.view.alpha = 1;
 
-        SBApplication *application = [[%c(SBApplicationController) sharedInstance] applicationWithBundleIdentifier:bundleIdentifier];
-        [application appcenter_startBackgroundingWithCompletion:^(BOOL success) {
-          dispatch_async(dispatch_get_main_queue(), ^{
-            ACAppPageViewController *appPage = [[ACAppPageViewController alloc] initWithBundleIdentifier:bundleIdentifier];
-            [self _addContentViewController:appPage];
-            [self _addContentViewController:contentViewController];
+    SBApplication *application = [[%c(SBApplicationController) sharedInstance] applicationWithBundleIdentifier:bundleIdentifier];
+    [application appcenter_startBackgroundingWithCompletion:^(BOOL success) {
+      dispatch_async(dispatch_get_main_queue(), ^{
+        ACAppPageViewController *appPage = [[ACAppPageViewController alloc] initWithBundleIdentifier:bundleIdentifier];
+        [self _addContentViewController:appPage];
+        [self _addContentViewController:selectionViewController];
 
-            [self controlCenterWillPresent];
-            MSHookIvar<UIViewController*>(self, "_selectedViewController") = appPage;
+        [self controlCenterWillPresent];
+        MSHookIvar<UIViewController*>(self, "_selectedViewController") = appPage;
 
-            [[(ACAppSelectionPageViewController*)contentViewController gridViewController] fixButtonEffects];
-          });
-        }];
-      }];
-
-      break;
-    }
-  }
+        [[selectionViewController gridViewController] fixButtonEffects];
+      });
+    }];
+  }];
 }
 
 - (void)_updatePageControl {

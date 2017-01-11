@@ -19,7 +19,7 @@
 @property (nonatomic, retain) CCUIControlCenterButton *button;
 @property (nonatomic, assign) id<ACAppIconCellDelegate> delegate;
 
-- (void)loadIconForApplication:(NSString*)appIdentifier;
+- (void)configureForApplication:(NSString*)appIdentifier;
 
 @end
 

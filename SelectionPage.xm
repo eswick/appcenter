@@ -1,5 +1,6 @@
 #import "SelectionPage.h"
 #import "SpringBoard.h"
+#import "Tweak.h"
 
 @implementation ACIconButton
 
@@ -73,7 +74,7 @@
   return false;
 }
 
-- (void)loadIconForApplication:(NSString*)appIdentifier {
+- (void)configureForApplication:(NSString*)appIdentifier {
   self.appIdentifier = appIdentifier;
 
   SBIconModel *iconModel = [(SBIconController*)[%c(SBIconController) sharedInstance] model];
@@ -83,6 +84,12 @@
   self.imageView.image = [icon getCachedIconImage:iconFormat];
 
   self.titleLabel.text = [[[%c(SBApplicationController) sharedInstance] applicationWithBundleIdentifier:self.appIdentifier] displayName];
+
+  if ([appPages containsObject:appIdentifier]) {
+    self.button.selected = true;
+  } else {
+    self.button.selected = false;
+  }
 }
 
 @end
@@ -90,7 +97,7 @@
 @implementation ACAppSelectionGridViewController
 
 - (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section {
-  return MIN([[[%c(SBAppSwitcherModel) sharedInstance] appcenter_model] count], 9);
+  return MIN([[[%c(SBAppSwitcherModel) sharedInstance] appcenter_model] count] + appPages.count, 9);
 }
 
 - (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath {
@@ -98,8 +105,15 @@
 
   cell.delegate = self;
 
-  NSString *appIdentifier = [[%c(SBAppSwitcherModel) sharedInstance] appcenter_model][indexPath.row];
-  [cell loadIconForApplication:appIdentifier];
+  NSString *appIdentifier = nil;
+
+  if (indexPath.row < appPages.count) {
+    appIdentifier = appPages[indexPath.row];
+  } else {
+    appIdentifier = [[%c(SBAppSwitcherModel) sharedInstance] appcenter_model][indexPath.row - appPages.count];
+  }
+
+  [cell configureForApplication:appIdentifier];
 
   return cell;
 }
@@ -238,7 +252,7 @@
 }
 
 - (void)controlCenterWillBeginTransition {
-
+  [self.gridViewController fixButtonEffects];
 }
 
 - (void)controlCenterDidDismiss {
