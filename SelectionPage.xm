@@ -224,7 +224,7 @@
 }
 
 - (void)controlCenterWillPresent {
-
+  [self.gridViewController.collectionView reloadData];
 }
 
 - (void)controlCenterDidFinishTransition {
