@@ -32,7 +32,7 @@
 
     self.button.delegate = self;
     self.button.userInteractionEnabled = false;
-    self.button.animatesStateChanges = true;
+    self.button.animatesStateChanges = false;
     self.button.translatesAutoresizingMaskIntoConstraints = false;
 
     [self.contentView addSubview:self.button];
@@ -154,13 +154,14 @@
 
   if (indexPath.row < appPages.count) {
     appIdentifier = appPages[indexPath.row];
-    cell.button.selected = false;
   } else {
     appIdentifier = [[%c(SBAppSwitcherModel) sharedInstance] appcenter_model][indexPath.row - appPages.count];
-    cell.button.selected = true;
   }
 
   ((ACAppSelectionPageViewController*)self.parentViewController).selectedCell = cell;
+
+  cell.button.selected = !cell.button.selected;
+
   [ccViewController appcenter_appSelected:appIdentifier];
 }
 
@@ -285,7 +286,7 @@
 }
 
 - (void)controlCenterWillPresent {
-  [self.gridViewController.collectionView reloadData];
+
 }
 
 - (void)controlCenterDidFinishTransition {
@@ -297,7 +298,7 @@
 }
 
 - (void)controlCenterDidDismiss {
-
+  [self.gridViewController.collectionView reloadData];
 }
 
 @end

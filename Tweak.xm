@@ -196,11 +196,8 @@ static BOOL waitingForAppLaunch = false;
           [appPages removeObject:bundleIdentifier];
           [self controlCenterWillPresent];
 
-          [[[selectionViewController gridViewController] collectionView] performBatchUpdates:^{
-            [[[selectionViewController gridViewController] collectionView] reloadSections:[NSIndexSet indexSetWithIndex:0]];
-          } completion:^(BOOL finished) {
-            [[selectionViewController gridViewController] fixButtonEffects];
-          }];
+          //[[[selectionViewController gridViewController] collectionView] reloadSections:[NSIndexSet indexSetWithIndex:0]];
+          //[[selectionViewController gridViewController] fixButtonEffects];
         }
       }
     }
