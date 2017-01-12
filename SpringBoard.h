@@ -20,12 +20,15 @@
 
 @property(readonly, copy, nonatomic) NSString *displayIdentifier;
 
++ (id)displayItemWithType:(NSString *)arg1 displayIdentifier:(id)arg2;
+
 @end
 
 @interface SBAppSwitcherModel : NSObject
 
 + (id)sharedInstance;
 - (NSArray<SBDisplayItem*>*)mainSwitcherDisplayItems;
+- (id)_displayItemForApplication:(id)arg1;
 
 @end
 
@@ -74,5 +77,18 @@
 - (void)appcenter_setBackgrounded:(BOOL)backgrounded withCompletion:(void (^)(BOOL))completion;
 - (void)appcenter_startBackgroundingWithCompletion:(void (^)(BOOL))completion;
 - (void)appcenter_stopBackgroundingWithCompletion:(void (^)(BOOL))completion;
+
+@end
+
+@interface SBAppSwitcherSnapshotView : UIView
+
++ (id)appSwitcherSnapshotViewForDisplayItem:(id)arg1 orientation:(long long)arg2 preferringDownscaledSnapshot:(_Bool)arg3 loadAsync:(_Bool)arg4 withQueue:(id)arg5;
+
+@end
+
+@interface SBDeckSwitcherPageViewProvider : NSObject
+
+- (id)pageViewForDisplayItem:(id)arg1 synchronously:(BOOL)arg2;
+- (id)initWithDelegate:(id)delegate;
 
 @end

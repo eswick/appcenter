@@ -35,5 +35,6 @@
 
 @property (nonatomic, retain) ACAppSelectionGridViewController *gridViewController;
 @property (nonatomic, retain) ACAppSelectionContainerView *view;
+@property (nonatomic, assign) ACAppIconCell *selectedCell;
 
 @end

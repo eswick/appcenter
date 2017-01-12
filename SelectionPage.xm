@@ -160,6 +160,7 @@
     cell.button.selected = true;
   }
 
+  ((ACAppSelectionPageViewController*)self.parentViewController).selectedCell = cell;
   [ccViewController appcenter_appSelected:appIdentifier];
 }
 

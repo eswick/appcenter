@@ -10,6 +10,17 @@
 #import "SelectionPage.h"
 #import "Tweak.h"
 
+#pragma mark Helpers
+
+static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect) {
+    CGAffineTransform transform = CGAffineTransformIdentity;
+    transform = CGAffineTransformTranslate(transform, -(CGRectGetMidX(sourceRect)-CGRectGetMidX(finalRect)), -(CGRectGetMidY(sourceRect)-CGRectGetMidY(finalRect)));
+    transform = CGAffineTransformScale(transform, finalRect.size.width/sourceRect.size.width, finalRect.size.height/sourceRect.size.height);
+
+    return transform;
+}
+
+
 #pragma mark Implementations
 
 @interface ACAppPageView : UIView
@@ -149,11 +160,15 @@
 
 ACAppSelectionPageViewController *selectionViewController = nil;
 NSMutableArray<NSString*> *appPages = nil;
+NSMutableDictionary<NSString*, SBAppSwitcherSnapshotView*> *snapshotViewCache = nil;
+static BOOL animatingAppLaunch = false;
+static BOOL waitingForAppLaunch = false;
 
 %hook CCUIControlCenterViewController
 
 - (void)_loadPages {
   %orig;
+  snapshotViewCache = [NSMutableDictionary new];
   selectionViewController = [[ACAppSelectionPageViewController alloc] initWithNibName:nil bundle:nil];
   [self _addContentViewController:selectionViewController];
   [selectionViewController release];
@@ -195,29 +210,94 @@ NSMutableArray<NSString*> *appPages = nil;
 
   [appPages addObject:bundleIdentifier];
 
-  [UIView animateWithDuration:0.25 animations:^{
-    selectionViewController.view.alpha = 0;
+  SBApplication *application = [[%c(SBApplicationController) sharedInstance] applicationWithBundleIdentifier:bundleIdentifier];
+
+  ACAppIconCell *selectedCell = selectionViewController.selectedCell;
+  CGRect initialIconPosition = [selectedCell.imageView convertRect:selectedCell.imageView.bounds toView:self.view];
+
+  SBIcon *icon = [[(SBIconController*)[%c(SBIconController) sharedInstance] model] expectedIconForDisplayIdentifier:bundleIdentifier];
+  int iconFormat = [icon iconFormatForLocation:0];
+
+  UIImageView *imageView = [[UIImageView alloc] initWithFrame:initialIconPosition];
+  imageView.image = [icon getCachedIconImage:iconFormat];
+
+  [self.view addSubview:imageView];
+
+  ACAppPageViewController *appPage = [[ACAppPageViewController alloc] initWithBundleIdentifier:bundleIdentifier];
+
+  [self _removeContentViewController:selectionViewController];
+  [self _addContentViewController:appPage];
+  [self _addContentViewController:selectionViewController];
+  [self controlCenterWillPresent];
+  [self scrollToPage:[self.contentViewControllers count] - 1 animated:false withCompletion:nil];
+
+  SBAppSwitcherSnapshotView *snapshotView = snapshotViewCache[bundleIdentifier];
+
+  snapshotView.transform = transformToRect(snapshotView.bounds, imageView.frame);
+  snapshotView.alpha = 0;
+  [self.view addSubview:snapshotView];
+
+  appPage.view.alpha = 0;
+
+  void (^animationComplete)(void) = ^{
+    dispatch_async(dispatch_get_main_queue(), ^{
+      appPage.view.alpha = 1;
+
+      [UIView animateWithDuration:0.25
+                            delay:0
+                          options:UIViewAnimationCurveEaseInOut
+                       animations:^{
+                         snapshotView.alpha = 0;
+                     } completion:^(BOOL finished) {
+                         [snapshotView removeFromSuperview];
+                     }];
+
+      [[[selectionViewController gridViewController] collectionView] reloadData];
+      [[selectionViewController gridViewController] fixButtonEffects];
+    });
+  };
+
+  animatingAppLaunch = true;
+  waitingForAppLaunch = true;
+
+  [UIView animateWithDuration:0.5
+                        delay:0
+                      options:UIViewAnimationCurveEaseInOut
+                   animations:^{
+    UIScrollView *pagesScrollView = MSHookIvar<UIScrollView*>(self, "_pagesScrollView");
+    pagesScrollView.contentOffset = CGPointMake(pagesScrollView.frame.size.width * ([self.contentViewControllers count] - 2), 0);
+
+    imageView.transform = CGAffineTransformMakeScale(5.0, 5.0);
+    imageView.center = CGPointMake([[UIScreen mainScreen] bounds].size.width / 2, [[UIScreen mainScreen] bounds].size.height / 2);
+    imageView.alpha = 0;
+
+    UIView *platterView = [MSHookIvar<NSArray<UIViewController*>*>(self, "_allPageContainerViewControllers")[0] view];
+
+    // FIXME: Position snapshot view properly (close enough for now)
+
+    CGFloat scale = platterView.bounds.size.width / [[UIScreen mainScreen] bounds].size.width;
+    CGRect toRect = CGRectApplyAffineTransform([[UIScreen mainScreen] bounds], CGAffineTransformMakeScale(scale, scale));
+    toRect.origin = CGPointMake(CGRectGetMidX([[UIScreen mainScreen] bounds]) - (toRect.size.width / 2), CGRectGetMidY([[UIScreen mainScreen] bounds]) - (toRect.size.height / 2));
+
+    snapshotView.transform = transformToRect(snapshotView.bounds, toRect);
+    snapshotView.alpha = 1;
+
   } completion:^(BOOL completed) {
-    [self _removeContentViewController:selectionViewController];
-
-    [[[selectionViewController gridViewController] collectionView] reloadData];
-
-    selectionViewController.view.alpha = 1;
-
-    SBApplication *application = [[%c(SBApplicationController) sharedInstance] applicationWithBundleIdentifier:bundleIdentifier];
-    [application appcenter_startBackgroundingWithCompletion:^(BOOL success) {
-      dispatch_async(dispatch_get_main_queue(), ^{
-        ACAppPageViewController *appPage = [[ACAppPageViewController alloc] initWithBundleIdentifier:bundleIdentifier];
-        [self _addContentViewController:appPage];
-        [self _addContentViewController:selectionViewController];
-
-        [self controlCenterWillPresent];
-        MSHookIvar<UIViewController*>(self, "_selectedViewController") = appPage;
-
-        [[selectionViewController gridViewController] fixButtonEffects];
-      });
-    }];
+    animatingAppLaunch = false;
+    if (!waitingForAppLaunch) {
+      animationComplete();
+    }
   }];
+
+  [application appcenter_startBackgroundingWithCompletion:^(BOOL success) {
+    waitingForAppLaunch = false;
+    if (!animatingAppLaunch) {
+      animationComplete();
+    }
+  }];
+
+  [imageView release];
+  [appPage release];
 }
 
 - (void)_updatePageControl {
@@ -258,12 +338,19 @@ NSMutableArray<NSString*> *appPages = nil;
 
 %new
 - (NSArray<NSString*>*)appcenter_model {
-  NSArray<SBDisplayItem*>* model = [self mainSwitcherDisplayItems];
+  NSArray<SBDisplayItem*>* model = [[self mainSwitcherDisplayItems] subarrayWithRange:NSMakeRange(0, MIN(9, [[self mainSwitcherDisplayItems] count]))];
   NSMutableArray<NSString*> *filteredModel = [NSMutableArray new];
 
   for (SBDisplayItem *item in model) {
     if ([item.displayIdentifier isEqualToString:[[(SpringBoard*)[UIApplication sharedApplication] _accessibilityFrontMostApplication] bundleIdentifier]]) {
       continue;
+    }
+
+    if (![snapshotViewCache objectForKey:[item displayIdentifier]]) {
+      SBAppSwitcherSnapshotView *snapshotView = [%c(SBAppSwitcherSnapshotView) appSwitcherSnapshotViewForDisplayItem:item orientation:UIInterfaceOrientationPortrait preferringDownscaledSnapshot:true loadAsync:false withQueue:dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)];
+      snapshotView.layer.cornerRadius = 10;
+      snapshotView.clipsToBounds = true;
+      snapshotViewCache[[item displayIdentifier]] = snapshotView;
     }
 
     for (NSString *bundleIdentifier in appPages) {
@@ -276,6 +363,18 @@ NSMutableArray<NSString*> *appPages = nil;
 skip:
     continue;
   }
+
+  NSMutableArray *unfilteredModel = [NSMutableArray new];
+  [unfilteredModel addObjectsFromArray:appPages];
+  [unfilteredModel addObjectsFromArray:filteredModel];
+
+  for (NSString *identifier in [snapshotViewCache allKeys]) {
+    if (![unfilteredModel containsObject:identifier]) {
+      [snapshotViewCache removeObjectForKey:identifier];
+    }
+  }
+
+  [unfilteredModel release];
 
   return [filteredModel autorelease];
 }

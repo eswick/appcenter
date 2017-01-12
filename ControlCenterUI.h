@@ -13,6 +13,7 @@
 - (void)scrollViewDidEndDecelerating:(id)arg1;
 - (id)sortedVisibleViewControllers;
 - (void)_addOrRemovePagesBasedOnVisibility;
+- (void)scrollToPage:(unsigned long long)arg1 animated:(BOOL)arg2 withCompletion:(void(^)(BOOL))completion;
 
 @end
 
