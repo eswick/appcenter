@@ -148,21 +148,13 @@
 - (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath {
   CCUIControlCenterViewController *ccViewController = (CCUIControlCenterViewController*)self.parentViewController.parentViewController.parentViewController;
 
-  NSString *appIdentifier = nil;
-
   ACAppIconCell *cell = (ACAppIconCell*)[self.collectionView cellForItemAtIndexPath:indexPath];
-
-  if (indexPath.row < appPages.count) {
-    appIdentifier = appPages[indexPath.row];
-  } else {
-    appIdentifier = [[%c(SBAppSwitcherModel) sharedInstance] appcenter_model][indexPath.row - appPages.count];
-  }
 
   ((ACAppSelectionPageViewController*)self.parentViewController).selectedCell = cell;
 
   cell.button.selected = !cell.button.selected;
 
-  [ccViewController appcenter_appSelected:appIdentifier];
+  [ccViewController appcenter_appSelected:cell.appIdentifier];
 }
 
 - (void)loadView {
