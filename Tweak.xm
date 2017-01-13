@@ -164,8 +164,35 @@ NSMutableArray<NSString*> *appPages = nil;
 NSMutableDictionary<NSString*, SBAppSwitcherSnapshotView*> *snapshotViewCache = nil;
 static BOOL animatingAppLaunch = false;
 static BOOL waitingForAppLaunch = false;
+static BOOL filterPlatterViews = false;
 
 %hook CCUIControlCenterViewController
+
+
+- (id)pagePlatterViewsForContainerView:(id)arg1 {
+  if (filterPlatterViews) {
+    NSArray *result = %orig;
+    NSMutableArray *mutableResult = [result mutableCopy];
+    NSMutableArray *platterViewsToRemove = [NSMutableArray new];
+
+    for (CCUIControlCenterPagePlatterView *platterView in mutableResult) {
+      if ([platterView.contentView isKindOfClass:[ACAppPageView class]]) {
+        [platterViewsToRemove addObject:platterView];
+      }
+    }
+
+    for (CCUIControlCenterPagePlatterView *platterView in platterViewsToRemove) {
+      [mutableResult removeObject:platterView];
+    }
+
+    [platterViewsToRemove release];
+
+    return [mutableResult autorelease];
+
+  } else {
+    return %orig;
+  }
+}
 
 - (void)_loadPages {
   %orig;
@@ -307,6 +334,16 @@ static BOOL waitingForAppLaunch = false;
     }
   }
   %orig;
+}
+
+%end
+
+%hook CCUIControlCenterContainerView
+
+- (void)_updateMasks {
+  filterPlatterViews = true;
+  %orig;
+  filterPlatterViews = false;
 }
 
 %end
