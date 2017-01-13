@@ -286,7 +286,11 @@
 }
 
 - (void)controlCenterWillPresent {
+  static dispatch_once_t onceToken;
 
+  dispatch_once (&onceToken, ^{
+    [self.gridViewController.collectionView reloadData];
+  });
 }
 
 - (void)controlCenterDidFinishTransition {
