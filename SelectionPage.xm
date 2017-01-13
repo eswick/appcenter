@@ -8,7 +8,7 @@
 - (id)initWithFrame:(CGRect)frame {
   self = [super initWithFrame:frame];
   if (self) {
-    UIImage *image = [UIImage imageWithContentsOfFile:@"/Library/Application Support/App Center/appcenter@2x.png"];
+    UIImage *image = [UIImage imageWithContentsOfFile:@"/Library/Application Support/App Center/appcenter.png"];
     [self setGlyphImage:image selectedGlyphImage:image name:@"ACIconButton"];
   }
   return self;
