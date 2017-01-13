@@ -79,6 +79,7 @@ static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect) {
 
       self.hostView.layer.cornerRadius = 10;
       self.hostView.layer.masksToBounds = true;
+      self.hostView.backgroundColor = [UIColor blackColor];
 
       CGFloat scale = self.view.bounds.size.width / [[UIScreen mainScreen] bounds].size.width;
       self.hostView.transform = CGAffineTransformMakeScale(scale, scale);
