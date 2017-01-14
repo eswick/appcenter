@@ -8,14 +8,22 @@
 - (id)initWithFrame:(CGRect)frame {
   self = [super initWithFrame:frame];
   if (self) {
-    UIImage *image = [UIImage imageWithContentsOfFile:@"/Library/Application Support/App Center/appcenter.png"];
-    [self setGlyphImage:image selectedGlyphImage:image name:@"ACIconButton"];
+    NSString *imageFilePath;
+    if (UIScreen.mainScreen.scale == 3) {
+      imageFilePath = @"/Library/Application Support/App Center/appcenter@3x.png";
+    } else {
+      imageFilePath = @"/Library/Application Support/App Center/appcenter@2x.png";
+    }
+    UIImage *image = [UIImage imageWithContentsOfFile:imageFilePath];
+    UIImage *slightlyLargerImage = [UIImage imageWithCGImage:[image CGImage] scale:image.scale/1.3 orientation:(image.imageOrientation)];
+    self.contentMode = UIViewContentModeScaleAspectFit;
+    [self setGlyphImage:slightlyLargerImage selectedGlyphImage:slightlyLargerImage name:@"ACIconButton"];
   }
   return self;
 }
 
 - (CGSize)intrinsicContentSize {
-  return CGSizeMake(25, 25);
+  return CGSizeMake(35, 35);
 }
 
 @end
@@ -25,11 +33,11 @@
 - (id)initWithFrame:(CGRect)frame {
   self = [super initWithFrame:frame];
   if (self) {
-
-    self.contentView.layer.cornerRadius = 12;
+    CGFloat cornerRadius = CGFloat(8.0);
+    self.contentView.layer.cornerRadius = cornerRadius;
 
     self.button = [CCUIControlCenterButton roundRectButton];
-
+    [self.button setRoundCorners: -1];
     self.button.delegate = self;
     self.button.userInteractionEnabled = false;
     self.button.animatesStateChanges = false;
@@ -40,10 +48,18 @@
     [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[button]|" options:nil metrics:nil views:@{ @"button" : self.button }]];
     [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[button]|" options:nil metrics:nil views:@{ @"button" : self.button }]];
 
-    self.imageView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, [%c(SBIconView) defaultIconImageSize].width * 0.80, [%c(SBIconView) defaultIconImageSize].height * 0.80)];
+    self.imageView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, [%c(SBIconView) defaultIconImageSize].width * 0.90, [%c(SBIconView) defaultIconImageSize].height * 0.90)];
     self.imageView.center = CGPointMake(self.contentView.bounds.size.width / 2, (self.contentView.bounds.size.height * 0.80) / 2);
     [self.button addSubview:self.imageView];
     [self.imageView release];
+
+    self.tintView = [[UIView alloc] initWithFrame:self.contentView.frame];
+    self.tintView.center = CGPointMake(self.contentView.bounds.size.width / 2, self.contentView.bounds.size.height / 2);
+    self.tintView.backgroundColor = [UIColor whiteColor];
+    self.tintView.layer.cornerRadius = cornerRadius;
+    self.tintView.alpha = 0.0;
+    [self.contentView insertSubview:self.tintView belowSubview:self.button];
+    [self.tintView release];
 
     CGPoint center = self.imageView.center;
     center.x = self.bounds.size.width / 2;
@@ -53,7 +69,7 @@
     self.titleLabel.textColor = [UIColor whiteColor];
     self.titleLabel.textAlignment = NSTextAlignmentCenter;
     self.titleLabel.adjustsFontSizeToFitWidth = false;
-    self.titleLabel.font = [UIFont systemFontOfSize:12];
+    self.titleLabel.font = [UIFont systemFontOfSize:13];
     self.titleLabel.translatesAutoresizingMaskIntoConstraints = false;
 
     [self.button addSubview:self.titleLabel];
@@ -92,7 +108,7 @@
   int iconFormat = [icon iconFormatForLocation:0];
 
   self.imageView.image = [icon getCachedIconImage:iconFormat];
-  self.imageView.highlightedImage = [self.imageView.image tintedImageUsingColor:[UIColor colorWithWhite:0.0 alpha:0.3]];
+  //self.imageView.highlightedImage = [self.imageView.image tintedImageUsingColor:[UIColor colorWithWhite:0.0 alpha:0.3]];
 
   self.titleLabel.text = [[[%c(SBApplicationController) sharedInstance] applicationWithBundleIdentifier:self.appIdentifier] displayName];
 
@@ -136,13 +152,13 @@
 }
 
 -(void)collectionView:(UICollectionView *)collectionView didHighlightItemAtIndexPath:(NSIndexPath *)indexPath {
-  ACAppIconCell *cell = (ACAppIconCell*)[self.collectionView cellForItemAtIndexPath:indexPath];
-  cell.imageView.highlighted = true;
+  //ACAppIconCell *cell = (ACAppIconCell*)[self.collectionView cellForItemAtIndexPath:indexPath];
+  //cell.imageView.highlighted = true;
 }
 
 -(void)collectionView:(UICollectionView *)collectionView didUnhighlightItemAtIndexPath:(NSIndexPath *)indexPath {
-  ACAppIconCell *cell = (ACAppIconCell*)[self.collectionView cellForItemAtIndexPath:indexPath];
-  cell.imageView.highlighted = false;
+  //ACAppIconCell *cell = (ACAppIconCell*)[self.collectionView cellForItemAtIndexPath:indexPath];
+  //cell.imageView.highlighted = false;
 }
 
 - (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath {
@@ -152,15 +168,32 @@
 
   ((ACAppSelectionPageViewController*)self.parentViewController).selectedCell = cell;
 
-  cell.button.selected = !cell.button.selected;
-
-  [ccViewController appcenter_appSelected:cell.appIdentifier];
+// NEW
+  BOOL nowSelected = !cell.button.selected;
+  CGFloat newValue;
+  if (nowSelected == false) {
+    newValue = CGFloat(0.0);
+  } else {
+    newValue = CGFloat(1.0);
+  }
+  [UIView animateWithDuration:0.2
+                        delay:0.0
+                      options:UIViewAnimationOptionCurveEaseIn
+                   animations:^{
+                            cell.tintView.alpha = newValue;
+                            }
+                   completion:^(BOOL finished){
+                            cell.button.selected = !cell.button.selected;
+                            [ccViewController appcenter_appSelected:cell.appIdentifier];
+                          }];
 }
 
 - (void)loadView {
 
   UICollectionViewFlowLayout *layout = [[UICollectionViewFlowLayout alloc] init];
-  layout.itemSize = CGSizeMake(80, 80);
+  layout.itemSize = CGSizeMake(98, 98);
+  layout.minimumLineSpacing = 5.0;
+  layout.minimumInteritemSpacing = 5.0;
 
   self.collectionView = [[UICollectionView alloc] initWithFrame:CGRectZero collectionViewLayout:layout];
 
@@ -206,7 +239,8 @@
     [self.titleLabel setMinimumScaleFactor:(float)0x3f400000];
     [self.titleLabel setTranslatesAutoresizingMaskIntoConstraints:false];
     self.titleLabel.text = @"App Center";
-    self.titleLabel.font = [UIFont systemFontOfSize:14 weight:UIFontWeightSemibold];
+    self.titleLabel.font = [UIFont systemFontOfSize:16.5 weight:UIFontWeightMedium];
+    self.titleLabel.alpha = 0.999;
 
     [self addSubview:self.iconButton];
     [self addSubview:self.titleLabel];
@@ -218,11 +252,11 @@
 
     NSMutableArray *constraints = [NSMutableArray new];
 
-    [constraints addObjectsFromArray:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|-(5)-[iconButton]" options:nil metrics:nil views:views]];
-    [constraints addObjectsFromArray:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|-(-1)-[iconButton]" options:nil metrics:nil views:views]];
-    [constraints addObjectsFromArray:[NSLayoutConstraint constraintsWithVisualFormat:@"H:[iconButton]-(10)-[titleLabel]" options:nil metrics:nil views:views]];
+    [constraints addObjectsFromArray:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[iconButton]" options:nil metrics:nil views:views]];
+    [constraints addObjectsFromArray:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|-(-6)-[iconButton]" options:nil metrics:nil views:views]];
+    [constraints addObjectsFromArray:[NSLayoutConstraint constraintsWithVisualFormat:@"H:[iconButton]-(5)-[titleLabel]" options:nil metrics:nil views:views]];
 
-    NSLayoutConstraint *labelFirstBaseline = [NSLayoutConstraint constraintWithItem:self.titleLabel attribute:NSLayoutAttributeFirstBaseline relatedBy:NSLayoutRelationEqual toItem:self attribute:NSLayoutAttributeTop multiplier:1.0 constant:17.0];
+    NSLayoutConstraint *labelFirstBaseline = [NSLayoutConstraint constraintWithItem:self.titleLabel attribute:NSLayoutAttributeFirstBaseline relatedBy:NSLayoutRelationEqual toItem:self attribute:NSLayoutAttributeTop multiplier:1.0 constant:15];
     [constraints addObject:labelFirstBaseline];
 
     [self addConstraints:constraints];
@@ -247,7 +281,7 @@
 }
 
 - (UIEdgeInsets)contentInsets {
-  return UIEdgeInsetsMake(16.0, 16.0, 16.0, 16.0);
+  return UIEdgeInsetsMake(25.0, 25.0, 25.0, 25.0);
 }
 
 - (BOOL)wantsVisible {
