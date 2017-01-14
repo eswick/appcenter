@@ -2,6 +2,7 @@
 #import "SpringBoard.h"
 #import "Tweak.h"
 #import "UIImage+Tint.h"
+#import "ManualLayout.h"
 
 @implementation ACIconButton
 
@@ -25,7 +26,7 @@
 - (id)initWithFrame:(CGRect)frame {
   self = [super initWithFrame:frame];
   if (self) {
-    CGFloat cornerRadius = 8.0;
+    CGFloat cornerRadius = [ManualLayout appCellCornerRadius];
     self.contentView.layer.cornerRadius = cornerRadius;
 
     self.button = [CCUIControlCenterButton roundRectButton];
@@ -40,7 +41,8 @@
     [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[button]|" options:nil metrics:nil views:@{ @"button" : self.button }]];
     [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[button]|" options:nil metrics:nil views:@{ @"button" : self.button }]];
 
-    self.imageView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, [%c(SBIconView) defaultIconImageSize].width * 0.90, [%c(SBIconView) defaultIconImageSize].height * 0.90)];
+    CGFloat appIconScale = [ManualLayout appIconScale];
+    self.imageView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, [%c(SBIconView) defaultIconImageSize].width * appIconScale, [%c(SBIconView) defaultIconImageSize].height * appIconScale)];
     self.imageView.center = CGPointMake(self.contentView.bounds.size.width / 2, (self.contentView.bounds.size.height * 0.80) / 2);
     [self.button addSubview:self.imageView];
     [self.imageView release];
@@ -100,7 +102,7 @@
   int iconFormat = [icon iconFormatForLocation:0];
 
   self.imageView.image = [icon getCachedIconImage:iconFormat];
-  //self.imageView.highlightedImage = [self.imageView.image tintedImageUsingColor:[UIColor colorWithWhite:0.0 alpha:0.3]];
+  self.imageView.highlightedImage = [self.imageView.image tintedImageUsingColor:[UIColor colorWithWhite:0.0 alpha:0.3]];
 
   self.titleLabel.text = [[[%c(SBApplicationController) sharedInstance] applicationWithBundleIdentifier:self.appIdentifier] displayName];
 
@@ -143,16 +145,6 @@
     return YES;
 }
 
--(void)collectionView:(UICollectionView *)collectionView didHighlightItemAtIndexPath:(NSIndexPath *)indexPath {
-  //ACAppIconCell *cell = (ACAppIconCell*)[self.collectionView cellForItemAtIndexPath:indexPath];
-  //cell.imageView.highlighted = true;
-}
-
--(void)collectionView:(UICollectionView *)collectionView didUnhighlightItemAtIndexPath:(NSIndexPath *)indexPath {
-  //ACAppIconCell *cell = (ACAppIconCell*)[self.collectionView cellForItemAtIndexPath:indexPath];
-  //cell.imageView.highlighted = false;
-}
-
 - (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath {
   CCUIControlCenterViewController *ccViewController = (CCUIControlCenterViewController*)self.parentViewController.parentViewController.parentViewController;
 
@@ -160,7 +152,6 @@
 
   ((ACAppSelectionPageViewController*)self.parentViewController).selectedCell = cell;
 
-// NEW
   BOOL nowSelected = !cell.button.selected;
   CGFloat newValue;
   if (nowSelected == false) {
@@ -183,9 +174,9 @@
 - (void)loadView {
 
   UICollectionViewFlowLayout *layout = [[UICollectionViewFlowLayout alloc] init];
-  layout.itemSize = CGSizeMake(98, 98);
-  layout.minimumLineSpacing = 5.0;
-  layout.minimumInteritemSpacing = 5.0;
+  layout.itemSize = [ManualLayout collectionViewFlowLayoutItemSize];
+  layout.minimumLineSpacing = [ManualLayout collectionViewFlowLayoutItemSpacing];
+  layout.minimumInteritemSpacing = [ManualLayout collectionViewFlowLayoutItemSpacing];
 
   self.collectionView = [[UICollectionView alloc] initWithFrame:CGRectZero collectionViewLayout:layout];
 
@@ -273,7 +264,7 @@
 }
 
 - (UIEdgeInsets)contentInsets {
-  return UIEdgeInsetsMake(25.0, 25.0, 25.0, 25.0);
+  return [ManualLayout collectionViewContentInset];
 }
 
 - (BOOL)wantsVisible {
