@@ -8,16 +8,8 @@
 - (id)initWithFrame:(CGRect)frame {
   self = [super initWithFrame:frame];
   if (self) {
-    NSString *imageFilePath;
-    if (UIScreen.mainScreen.scale == 3) {
-      imageFilePath = @"/Library/Application Support/App Center/appcenter@3x.png";
-    } else {
-      imageFilePath = @"/Library/Application Support/App Center/appcenter@2x.png";
-    }
-    UIImage *image = [UIImage imageWithContentsOfFile:imageFilePath];
-    UIImage *slightlyLargerImage = [UIImage imageWithCGImage:[image CGImage] scale:image.scale/1.3 orientation:(image.imageOrientation)];
-    self.contentMode = UIViewContentModeScaleAspectFit;
-    [self setGlyphImage:slightlyLargerImage selectedGlyphImage:slightlyLargerImage name:@"ACIconButton"];
+    UIImage *image = [UIImage imageWithContentsOfFile:@"/Library/Application Support/App Center/appcenter.png"];
+    [self setGlyphImage:image selectedGlyphImage:image name:@"ACIconButton"];
   }
   return self;
 }
@@ -33,11 +25,11 @@
 - (id)initWithFrame:(CGRect)frame {
   self = [super initWithFrame:frame];
   if (self) {
-    CGFloat cornerRadius = CGFloat(8.0);
+    CGFloat cornerRadius = 8.0;
     self.contentView.layer.cornerRadius = cornerRadius;
 
     self.button = [CCUIControlCenterButton roundRectButton];
-    [self.button setRoundCorners: -1];
+    [self.button setRoundCorners:0];
     self.button.delegate = self;
     self.button.userInteractionEnabled = false;
     self.button.animatesStateChanges = false;

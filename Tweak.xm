@@ -251,9 +251,6 @@ static BOOL filterPlatterViews = false;
           [self _removeContentViewController:contentViewController];
           [appPages removeObject:bundleIdentifier];
           [self controlCenterWillPresent];
-
-          //[[[selectionViewController gridViewController] collectionView] reloadSections:[NSIndexSet indexSetWithIndex:0]];
-          //[[selectionViewController gridViewController] fixButtonEffects];
         }
       }
     }
@@ -325,8 +322,6 @@ static BOOL filterPlatterViews = false;
     imageView.alpha = 0;
 
     UIView *platterView = [MSHookIvar<NSArray<UIViewController*>*>(self, "_allPageContainerViewControllers")[0] view];
-
-    // FIXME: Position snapshot view properly (close enough for now)
 
     CGFloat scale = platterView.bounds.size.width / [[UIScreen mainScreen] bounds].size.width;
     CGRect toRect = CGRectApplyAffineTransform([[UIScreen mainScreen] bounds], CGAffineTransformMakeScale(scale, scale));
