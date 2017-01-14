@@ -1,13 +1,11 @@
 
-
-@class ManualLayout;
-
-@interface ManualLayout : NSObject
+@interface ACManualLayout : NSObject
 
 +(CGFloat)appCellCornerRadius;
 +(CGFloat)appIconScale;
 +(UIEdgeInsets)collectionViewContentInset;
 +(CGSize)collectionViewFlowLayoutItemSize;
 +(CGFloat)collectionViewFlowLayoutItemSpacing;
++(CGFloat)appCenterLabelOffset;
 
 @end

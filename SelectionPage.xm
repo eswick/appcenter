@@ -26,7 +26,7 @@
 - (id)initWithFrame:(CGRect)frame {
   self = [super initWithFrame:frame];
   if (self) {
-    CGFloat cornerRadius = [ManualLayout appCellCornerRadius];
+    CGFloat cornerRadius = [ACManualLayout appCellCornerRadius];
     self.contentView.layer.cornerRadius = cornerRadius;
 
     self.button = [CCUIControlCenterButton roundRectButton];
@@ -40,7 +40,7 @@
     [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[button]|" options:nil metrics:nil views:@{ @"button" : self.button }]];
     [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[button]|" options:nil metrics:nil views:@{ @"button" : self.button }]];
 
-    CGFloat appIconScale = [ManualLayout appIconScale];
+    CGFloat appIconScale = [ACManualLayout appIconScale];
     self.imageView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, [%c(SBIconView) defaultIconImageSize].width * appIconScale, [%c(SBIconView) defaultIconImageSize].height * appIconScale)];
     self.imageView.center = CGPointMake(self.contentView.bounds.size.width / 2, (self.contentView.bounds.size.height * 0.80) / 2);
     [self.button addSubview:self.imageView];
@@ -153,9 +153,9 @@
 - (void)loadView {
 
   UICollectionViewFlowLayout *layout = [[UICollectionViewFlowLayout alloc] init];
-  layout.itemSize = [ManualLayout collectionViewFlowLayoutItemSize];
-  layout.minimumLineSpacing = [ManualLayout collectionViewFlowLayoutItemSpacing];
-  layout.minimumInteritemSpacing = [ManualLayout collectionViewFlowLayoutItemSpacing];
+  layout.itemSize = [ACManualLayout collectionViewFlowLayoutItemSize];
+  layout.minimumLineSpacing = [ACManualLayout collectionViewFlowLayoutItemSpacing];
+  layout.minimumInteritemSpacing = [ACManualLayout collectionViewFlowLayoutItemSpacing];
 
   self.collectionView = [[UICollectionView alloc] initWithFrame:CGRectZero collectionViewLayout:layout];
 
@@ -216,9 +216,10 @@
 
     [constraints addObjectsFromArray:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[iconButton]" options:nil metrics:nil views:views]];
     [constraints addObjectsFromArray:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|-(-6)-[iconButton]" options:nil metrics:nil views:views]];
-    [constraints addObjectsFromArray:[NSLayoutConstraint constraintsWithVisualFormat:@"H:[iconButton]-(5)-[titleLabel]" options:nil metrics:nil views:views]];
+    [constraints addObjectsFromArray:[NSLayoutConstraint constraintsWithVisualFormat:@"H:[iconButton]-(8)-[titleLabel]" options:nil metrics:nil views:views]];
 
-    NSLayoutConstraint *labelFirstBaseline = [NSLayoutConstraint constraintWithItem:self.titleLabel attribute:NSLayoutAttributeFirstBaseline relatedBy:NSLayoutRelationEqual toItem:self attribute:NSLayoutAttributeTop multiplier:1.0 constant:15];
+    CGFloat labelBaselineOffset = [ACManualLayout appCenterLabelOffset];
+    NSLayoutConstraint *labelFirstBaseline = [NSLayoutConstraint constraintWithItem:self.titleLabel attribute:NSLayoutAttributeFirstBaseline relatedBy:NSLayoutRelationEqual toItem:self attribute:NSLayoutAttributeTop multiplier:1.0 constant:labelBaselineOffset];
     [constraints addObject:labelFirstBaseline];
 
     [self addConstraints:constraints];
@@ -243,7 +244,7 @@
 }
 
 - (UIEdgeInsets)contentInsets {
-  return [ManualLayout collectionViewContentInset];
+  return [ACManualLayout collectionViewContentInset];
 }
 
 - (BOOL)wantsVisible {
@@ -268,7 +269,7 @@
   };
 
   [constraints addObjectsFromArray:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[gridView]|" options:nil metrics:nil views:views]];
-  [constraints addObjectsFromArray:[NSLayoutConstraint constraintsWithVisualFormat:@"V:[iconButton]-10-[gridView]|" options:nil metrics:nil views:views]];
+  [constraints addObjectsFromArray:[NSLayoutConstraint constraintsWithVisualFormat:@"V:[iconButton]-15-[gridView]|" options:nil metrics:nil views:views]];
 
   [self.view addConstraints:constraints];
 }

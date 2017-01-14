@@ -1,6 +1,6 @@
 #import "ManualLayout.h"
 
-@implementation ManualLayout : NSObject
+@implementation ACManualLayout : NSObject
 
 +(CGFloat)appCellCornerRadius {
   return CGFloat(8.0);
@@ -9,7 +9,7 @@
   return 0.90;
 }
 +(UIEdgeInsets)collectionViewContentInset {
-  CGFloat inset = [ManualLayout screenWidth] / 30;
+  CGFloat inset = [ACManualLayout screenWidth] * [ACManualLayout getScale] / 30;
   return UIEdgeInsetsMake(inset, inset, inset, inset);
 }
 +(CGSize)collectionViewFlowLayoutItemSize {
@@ -25,13 +25,19 @@
 +(BOOL)isIPad {
   return UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad;
 }
++(CGFloat)appCenterLabelOffset {
+  return 16.5;
+}
 +(CGFloat)screenWidth {
-  CGSize size = [ManualLayout screenSize];
-  if ([ManualLayout isIPad]) {
+  CGSize size = [ACManualLayout screenSize];
+  if ([ACManualLayout isIPad]) {
     return MIN(size.width, size.height);
   } else {
     return size.width;
   }
+}
++(CGFloat)getScale {
+  return UIScreen.mainScreen.scale;
 }
 
 @end
