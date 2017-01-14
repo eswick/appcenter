@@ -1,14 +1,17 @@
 #pragma mark Includes & Defines
 
-#include <substrate.h>
-#define REQUESTER @"com.eswick.appcenter"
-
+#import <substrate.h>
 #import "ControlCenterUI.h"
 #import "SpringBoard.h"
 #import "FrontBoard.h"
 #import "FrontBoardServices.h"
 #import "SelectionPage.h"
 #import "Tweak.h"
+
+#pragma mark Constants
+
+#define REQUESTER @"com.eswick.appcenter"
+#define APP_PAGE_PADDING 5.0
 
 #pragma mark Helpers
 
@@ -37,6 +40,7 @@ static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect) {
 @property (nonatomic, assign) id <CCUIControlCenterPageContentViewControllerDelegate> delegate;
 @property (nonatomic, retain) FBSceneHostManager *sceneHostManager;
 @property (nonatomic, retain) FBSceneHostWrapperView *hostView;
+@property (nonatomic, assign) BOOL controlCenterTransitioning;
 
 - (id)initWithBundleIdentifier:(NSString*)bundleIdentifier;
 - (void)controlCenterDidFinishTransition;
@@ -59,10 +63,29 @@ static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect) {
 }
 
 - (void)controlCenterDidFinishTransition {
+  self.controlCenterTransitioning = false;
 
+  [UIView animateWithDuration:0.25 animations:^{
+    CGRect frame = self.hostView.frame;
+
+    frame.origin.x = self.view.frame.origin.x;
+    frame.origin.y = [self.view convertPoint:CGPointMake(0, CGRectGetMidY([[UIScreen mainScreen] bounds])) fromView:[UIApplication sharedApplication].keyWindow].y - (frame.size.height / 2) - APP_PAGE_PADDING;
+
+    self.hostView.frame = frame;
+  }];
 }
 
 - (void)controlCenterWillBeginTransition {
+  self.controlCenterTransitioning = true;
+
+  [UIView animateWithDuration:0.25 animations:^{
+    CGRect frame = self.hostView.frame;
+
+    frame.origin.x = self.view.frame.origin.x;
+    frame.origin.y = 0;
+
+    self.hostView.frame = frame;
+  }];
 
 }
 
@@ -99,7 +122,12 @@ static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect) {
   CGRect frame = self.hostView.frame;
 
   frame.origin.x = self.view.frame.origin.x;
-  frame.origin.y = self.view.frame.size.height - self.hostView.frame.size.height;
+
+  if (self.controlCenterTransitioning) {
+    frame.origin.y = 0;
+  } else {
+    frame.origin.y = [self.view convertPoint:CGPointMake(0, CGRectGetMidY([[UIScreen mainScreen] bounds])) fromView:[UIApplication sharedApplication].keyWindow].y - (frame.size.height / 2) - APP_PAGE_PADDING;
+  }
 
   self.hostView.frame = frame;
 }
@@ -302,7 +330,7 @@ static BOOL filterPlatterViews = false;
 
     CGFloat scale = platterView.bounds.size.width / [[UIScreen mainScreen] bounds].size.width;
     CGRect toRect = CGRectApplyAffineTransform([[UIScreen mainScreen] bounds], CGAffineTransformMakeScale(scale, scale));
-    toRect.origin = CGPointMake(CGRectGetMidX([[UIScreen mainScreen] bounds]) - (toRect.size.width / 2), CGRectGetMidY([[UIScreen mainScreen] bounds]) - (toRect.size.height / 2));
+    toRect.origin = CGPointMake(CGRectGetMidX([[UIScreen mainScreen] bounds]) - (toRect.size.width / 2), CGRectGetMidY([[UIScreen mainScreen] bounds]) - (toRect.size.height / 2) - APP_PAGE_PADDING);
 
     snapshotView.transform = transformToRect(snapshotView.bounds, toRect);
     snapshotView.alpha = 1;
