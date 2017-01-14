@@ -30,10 +30,9 @@
     self.contentView.layer.cornerRadius = cornerRadius;
 
     self.button = [CCUIControlCenterButton roundRectButton];
-    [self.button setRoundCorners:0];
     self.button.delegate = self;
     self.button.userInteractionEnabled = false;
-    self.button.animatesStateChanges = false;
+    self.button.animatesStateChanges = true;
     self.button.translatesAutoresizingMaskIntoConstraints = false;
 
     [self.contentView addSubview:self.button];
@@ -46,14 +45,6 @@
     self.imageView.center = CGPointMake(self.contentView.bounds.size.width / 2, (self.contentView.bounds.size.height * 0.80) / 2);
     [self.button addSubview:self.imageView];
     [self.imageView release];
-
-    self.tintView = [[UIView alloc] initWithFrame:self.contentView.frame];
-    self.tintView.center = CGPointMake(self.contentView.bounds.size.width / 2, self.contentView.bounds.size.height / 2);
-    self.tintView.backgroundColor = [UIColor whiteColor];
-    self.tintView.layer.cornerRadius = cornerRadius;
-    self.tintView.alpha = 0.0;
-    [self.contentView insertSubview:self.tintView belowSubview:self.button];
-    [self.tintView release];
 
     CGPoint center = self.imageView.center;
     center.x = self.bounds.size.width / 2;
@@ -102,7 +93,7 @@
   int iconFormat = [icon iconFormatForLocation:0];
 
   self.imageView.image = [icon getCachedIconImage:iconFormat];
-  self.imageView.highlightedImage = [self.imageView.image tintedImageUsingColor:[UIColor colorWithWhite:0.0 alpha:0.3]];
+  //self.imageView.highlightedImage = [self.imageView.image tintedImageUsingColor:[UIColor colorWithWhite:0.0 alpha:0.3]];
 
   self.titleLabel.text = [[[%c(SBApplicationController) sharedInstance] applicationWithBundleIdentifier:self.appIdentifier] displayName];
 
@@ -152,23 +143,11 @@
 
   ((ACAppSelectionPageViewController*)self.parentViewController).selectedCell = cell;
 
-  BOOL nowSelected = !cell.button.selected;
-  CGFloat newValue;
-  if (nowSelected == false) {
-    newValue = CGFloat(0.0);
-  } else {
-    newValue = CGFloat(1.0);
-  }
-  [UIView animateWithDuration:0.2
-                        delay:0.0
-                      options:UIViewAnimationOptionCurveEaseIn
-                   animations:^{
-                            cell.tintView.alpha = newValue;
-                            }
-                   completion:^(BOOL finished){
-                            cell.button.selected = !cell.button.selected;
-                            [ccViewController appcenter_appSelected:cell.appIdentifier];
-                          }];
+  cell.button.selected = !cell.button.selected;
+
+  dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.2 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+    [ccViewController appcenter_appSelected:cell.appIdentifier];
+  });
 }
 
 - (void)loadView {

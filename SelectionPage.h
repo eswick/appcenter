@@ -11,7 +11,6 @@
 
 @property (nonatomic, retain) NSString *appIdentifier;
 @property (nonatomic, retain) UIImageView *imageView;
-@property (nonatomic, retain) UIView *tintView;
 @property (nonatomic, retain) UILabel *titleLabel;
 @property (nonatomic, retain) CCUIControlCenterButton *button;
 
