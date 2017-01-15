@@ -338,6 +338,8 @@
   CCUIControlCenterViewController *ccViewController = (CCUIControlCenterViewController*)self.parentViewController.parentViewController;
   MSHookIvar<UIGestureRecognizer*>(ccViewController, "_tapGesture").enabled = false;
   MSHookIvar<UIView*>(ccViewController, "_pagesScrollView").userInteractionEnabled = false;
+
+  [self.view.searchBar becomeFirstResponder];
 }
 
 - (void)endSearching {
