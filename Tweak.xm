@@ -303,7 +303,6 @@ static BOOL filterPlatterViews = false;
                      }];
 
       [[[selectionViewController gridViewController] collectionView] reloadData];
-      [[selectionViewController gridViewController] fixButtonEffects];
     });
   };
 

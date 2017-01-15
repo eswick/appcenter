@@ -6,6 +6,7 @@
 - (NSString*)bundleIdentifier;
 - (BOOL)isRunning;
 - (NSString*)displayName;
+- (BOOL)hasHiddenTag;
 
 @end
 

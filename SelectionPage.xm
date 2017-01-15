@@ -79,8 +79,14 @@
 
     [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[label]|" options:nil metrics:nil views:@{ @"label" : self.titleLabel }]];
     [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:[imageView][label]|" options:nil metrics:nil views:@{ @"label" : self.titleLabel, @"imageView" : self.imageView }]];
+
+    [[NSNotificationCenter defaultCenter] addObserver:self.button selector:@selector(_updateEffects) name:@"ACUpdateButtonEffects" object:nil];
   }
   return self;
+}
+
+- (void)prepareForReuse {
+  [self.button _updateEffects];
 }
 
 - (id)controlCenterSystemAgent {
@@ -126,7 +132,31 @@
 
 @implementation ACAppSelectionGridViewController
 
+- (NSArray*)searchResults {
+  NSDictionary *applications = MSHookIvar<NSDictionary*>([%c(SBApplicationController) sharedInstance], "_applicationsByBundleIdentifer");
+
+  NSMutableArray *result = [NSMutableArray new];
+
+  for (NSString *key in applications) {
+    SBApplication *application = applications[key];
+    if ([[[application displayName] lowercaseString] hasPrefix:[selectionViewController.view.searchBar.text lowercaseString]]) {
+      if ([application hasHiddenTag]) {
+        continue;
+      }
+      if ([appPages containsObject:[application bundleIdentifier]]) {
+        continue;
+      }
+      [result addObject:application];
+    }
+  }
+
+  return [result autorelease];
+}
+
 - (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section {
+  if (selectionViewController.searching) {
+    return MIN([[self searchResults] count], 9);
+  }
   return MIN([[[%c(SBAppSwitcherModel) sharedInstance] appcenter_model] count] + appPages.count, 9);
 }
 
@@ -135,7 +165,9 @@
 
   NSString *appIdentifier = nil;
 
-  if (indexPath.row < appPages.count) {
+  if (selectionViewController.searching) {
+    appIdentifier = [[self searchResults][indexPath.row] bundleIdentifier];
+  } else if (indexPath.row < appPages.count) {
     appIdentifier = appPages[indexPath.row];
   } else {
     appIdentifier = [[%c(SBAppSwitcherModel) sharedInstance] appcenter_model][indexPath.row - appPages.count];
@@ -194,9 +226,9 @@
 }
 
 - (void)fixButtonEffects {
-  if ([self collectionView:self.collectionView numberOfItemsInSection:0] > 0) {
-    [[(ACAppIconCell*)[self collectionView:self.collectionView cellForItemAtIndexPath:[NSIndexPath indexPathForRow:0 inSection:0]] button] _updateEffects];
-  }
+  // CCUIControlCenterButton is weird.
+  
+  [[NSNotificationCenter defaultCenter] postNotificationName:@"ACUpdateButtonEffects" object:self];
 }
 
 @end
@@ -329,6 +361,9 @@
 - (void)beginSearching {
   self.searching = true;
 
+  [self.gridViewController.collectionView reloadData];
+  [self.gridViewController fixButtonEffects];
+
   [UIView animateWithDuration:0.25 animations:^{
     self.view.searchBar.alpha = 1.0;
     self.view.searchButton.alpha = 0.0;
@@ -365,6 +400,13 @@
 - (void)searchBarCancelButtonClicked:(UISearchBar *)searchBar {
    [searchBar resignFirstResponder];
    [self endSearching];
+   [self.gridViewController.collectionView reloadData];
+   [self.gridViewController fixButtonEffects];
+}
+
+- (void)searchBar:(UISearchBar *)searchBar textDidChange:(NSString *)searchText {
+  [self.gridViewController.collectionView reloadData];
+  [self.gridViewController fixButtonEffects];
 }
 
 - (void)controlCenterWillPresent {
@@ -380,7 +422,7 @@
 }
 
 - (void)controlCenterWillBeginTransition {
-  [self.gridViewController fixButtonEffects];
+
 }
 
 - (void)controlCenterDidDismiss {
