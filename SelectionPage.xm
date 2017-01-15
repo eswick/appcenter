@@ -3,6 +3,24 @@
 #import "Tweak.h"
 #import "UIImage+Tint.h"
 #import "ManualLayout.h"
+#import <substrate.h>
+
+@implementation ACSearchButton
+
+- (id)init {
+  self = [super initWithFrame:CGRectMake(0, 0, 25, 25)];
+  if (self) {
+    UIImage *image = [UIImage imageWithContentsOfFile:@"/Library/Application Support/App Center/mag.png"];
+    [self setImage:image forState:UIControlStateNormal];
+  }
+  return self;
+}
+
+- (CGSize)intrinsicContentSize {
+  return CGSizeMake(25, 25);
+}
+
+@end
 
 @implementation ACIconButton
 
@@ -143,11 +161,15 @@
 
   ((ACAppSelectionPageViewController*)self.parentViewController).selectedCell = cell;
 
-  cell.button.selected = !cell.button.selected;
-
-  dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.2 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+  dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (selectionViewController.searching ? 0.5 : 0.2) * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
     [ccViewController appcenter_appSelected:cell.appIdentifier];
   });
+
+  if (selectionViewController.searching && !cell.button.selected) {
+    [selectionViewController endSearching];
+  }
+
+  cell.button.selected = !cell.button.selected;
 }
 
 - (void)loadView {
@@ -204,12 +226,34 @@
     self.titleLabel.font = [UIFont systemFontOfSize:16.5 weight:UIFontWeightMedium];
     self.titleLabel.alpha = 0.999;
 
+    self.searchButton = [[ACSearchButton alloc] init];
+    [self.searchButton setTranslatesAutoresizingMaskIntoConstraints:false];
+
+    self.searchBar = [[UISearchBar alloc] init];
+    self.searchBar.translatesAutoresizingMaskIntoConstraints = false;
+    self.searchBar.alpha = 0.0;
+    self.searchBar.showsCancelButton = true;
+
+    UIImage *backgroundImage = [UIImage new];
+    [self.searchBar setBackgroundImage:backgroundImage];
+    [self.searchBar setTranslucent:true];
+    [backgroundImage release];
+
+    [self addSubview:self.searchButton];
     [self addSubview:self.iconButton];
     [self addSubview:self.titleLabel];
+    [self addSubview:self.searchBar];
+
+    [self.searchButton release];
+    [self.iconButton release];
+    [self.titleLabel release];
+    [self.searchBar release];
 
     NSDictionary *views = @{
       @"iconButton": self.iconButton,
-      @"titleLabel": self.titleLabel
+      @"titleLabel": self.titleLabel,
+      @"searchButton": self.searchButton,
+      @"searchBar": self.searchBar
     };
 
     NSMutableArray *constraints = [NSMutableArray new];
@@ -217,10 +261,15 @@
     [constraints addObjectsFromArray:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[iconButton]" options:nil metrics:nil views:views]];
     [constraints addObjectsFromArray:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|-(-6)-[iconButton]" options:nil metrics:nil views:views]];
     [constraints addObjectsFromArray:[NSLayoutConstraint constraintsWithVisualFormat:@"H:[iconButton]-(8)-[titleLabel]" options:nil metrics:nil views:views]];
+    [constraints addObjectsFromArray:[NSLayoutConstraint constraintsWithVisualFormat:@"H:[searchButton]|" options:nil metrics:nil views:views]];
+    [constraints addObjectsFromArray:[NSLayoutConstraint constraintsWithVisualFormat:@"H:[iconButton]-8-[searchBar]|" options:nil metrics:nil views:views]];
+    [constraints addObject:[NSLayoutConstraint constraintWithItem:self.searchBar attribute:NSLayoutAttributeCenterY relatedBy:NSLayoutRelationEqual toItem:self.iconButton attribute:NSLayoutAttributeCenterY multiplier:1.0 constant:0]];
 
     CGFloat labelBaselineOffset = [ACManualLayout appCenterLabelOffset];
     NSLayoutConstraint *labelFirstBaseline = [NSLayoutConstraint constraintWithItem:self.titleLabel attribute:NSLayoutAttributeFirstBaseline relatedBy:NSLayoutRelationEqual toItem:self attribute:NSLayoutAttributeTop multiplier:1.0 constant:labelBaselineOffset];
     [constraints addObject:labelFirstBaseline];
+
+    [constraints addObject:[NSLayoutConstraint constraintWithItem:self.searchButton attribute:NSLayoutAttributeCenterY relatedBy:NSLayoutRelationEqual toItem:self.iconButton attribute:NSLayoutAttributeCenterY multiplier:1.0 constant:0]];
 
     [self addConstraints:constraints];
 
@@ -256,6 +305,9 @@
   self.view = view;
   [view release];
 
+  [self.view.searchButton addTarget:self action:@selector(searchPressed:) forControlEvents:UIControlEventTouchUpInside];
+  self.view.searchBar.delegate = self;
+
   [self addChildViewController:self.gridViewController];
   [self.gridViewController.view setFrame:self.view.bounds];
   [self.view addSubview:self.gridViewController.view];
@@ -272,6 +324,45 @@
   [constraints addObjectsFromArray:[NSLayoutConstraint constraintsWithVisualFormat:@"V:[iconButton]-15-[gridView]|" options:nil metrics:nil views:views]];
 
   [self.view addConstraints:constraints];
+}
+
+- (void)beginSearching {
+  self.searching = true;
+
+  [UIView animateWithDuration:0.25 animations:^{
+    self.view.searchBar.alpha = 1.0;
+    self.view.searchButton.alpha = 0.0;
+    self.view.titleLabel.alpha = 0.0;
+  }];
+
+  CCUIControlCenterViewController *ccViewController = (CCUIControlCenterViewController*)self.parentViewController.parentViewController;
+  MSHookIvar<UIGestureRecognizer*>(ccViewController, "_tapGesture").enabled = false;
+  MSHookIvar<UIView*>(ccViewController, "_pagesScrollView").userInteractionEnabled = false;
+}
+
+- (void)endSearching {
+  self.searching = false;
+
+  [UIView animateWithDuration:0.25 animations:^{
+    self.view.searchBar.alpha = 0.0;
+    self.view.searchButton.alpha = 1.0;
+    self.view.titleLabel.alpha = 1.0;
+  }];
+
+  CCUIControlCenterViewController *ccViewController = (CCUIControlCenterViewController*)self.parentViewController.parentViewController;
+  MSHookIvar<UIGestureRecognizer*>(ccViewController, "_tapGesture").enabled = true;
+  MSHookIvar<UIView*>(ccViewController, "_pagesScrollView").userInteractionEnabled = true;
+
+  [self.view.searchBar resignFirstResponder];
+}
+
+- (void)searchPressed:(id)sender {
+  [self beginSearching];
+}
+
+- (void)searchBarCancelButtonClicked:(UISearchBar *)searchBar {
+   [searchBar resignFirstResponder];
+   [self endSearching];
 }
 
 - (void)controlCenterWillPresent {
@@ -291,6 +382,9 @@
 }
 
 - (void)controlCenterDidDismiss {
+  if (self.searching) {
+    [self endSearching];
+  }
   [self.gridViewController.collectionView reloadData];
 }
 

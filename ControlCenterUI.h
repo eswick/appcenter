@@ -70,5 +70,6 @@
 @interface CCUIControlCenterViewController (AppCenter)
 
 - (void)appcenter_appSelected:(NSString*)bundleIdentifier;
+- (CCUIControlCenterPageContainerViewController*)appcenter_containerViewControllerForContentView:(UIView*)contentView;
 
 @end

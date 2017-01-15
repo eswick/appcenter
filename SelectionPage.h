@@ -3,6 +3,10 @@
 
 @class ACAppIconCell;
 
+@interface ACSearchButton : UIButton
+
+@end
+
 @interface ACIconButton : CCUIControlCenterButton
 
 @end
@@ -28,13 +32,19 @@
 
 @property (nonatomic, retain) ACIconButton *iconButton;
 @property (nonatomic, retain) UILabel *titleLabel;
+@property (nonatomic, retain) UIButton *searchButton;
+@property (nonatomic, retain) UISearchBar *searchBar;
 
 @end
 
-@interface ACAppSelectionPageViewController : UIViewController <CCUIControlCenterPageContentProviding>
+@interface ACAppSelectionPageViewController : UIViewController <CCUIControlCenterPageContentProviding, UISearchBarDelegate>
 
 @property (nonatomic, retain) ACAppSelectionGridViewController *gridViewController;
 @property (nonatomic, retain) ACAppSelectionContainerView *view;
 @property (nonatomic, assign) ACAppIconCell *selectedCell;
+@property (nonatomic, assign) BOOL searching;
+
+- (void)beginSearching;
+- (void)endSearching;
 
 @end

@@ -359,9 +359,76 @@ static BOOL filterPlatterViews = false;
   %orig;
 }
 
+- (void)viewDidLoad {
+  %orig;
+
+  [[NSNotificationCenter defaultCenter] addObserver:self
+                                           selector:@selector(keyboardWillShow:)
+                                               name:UIKeyboardWillShowNotification
+                                             object:nil];
+
+  [[NSNotificationCenter defaultCenter] addObserver:self
+                                           selector:@selector(keyboardWillHide:)
+                                               name:UIKeyboardWillHideNotification
+                                             object:nil];
+}
+
+- (void)viewWillLayoutSubviews {
+  if (!selectionViewController.searching) {
+    %orig;
+  }
+}
+
+%new
+- (void)keyboardWillShow:(NSNotification*)notification {
+  CGSize keyboardSize = [[[notification userInfo] objectForKey:UIKeyboardFrameBeginUserInfoKey] CGRectValue].size;
+
+  UIViewController *containerVC = [self appcenter_containerViewControllerForContentView:selectionViewController.view];
+
+  [UIView animateWithDuration:0.5 animations:^{
+    CGRect frame = containerVC.view.frame;
+    frame.origin.y = -keyboardSize.height;
+    containerVC.view.frame = frame;
+  }];
+}
+
+%new
+- (void)keyboardWillHide:(NSNotification*)notification {
+  UIViewController *containerVC = [self appcenter_containerViewControllerForContentView:selectionViewController.view];
+
+  [UIView animateWithDuration:0.5 animations:^{
+    CGRect frame = containerVC.view.frame;
+    frame.origin.y = 0;
+    containerVC.view.frame = frame;
+  }];
+}
+
+%new
+- (CCUIControlCenterPageContainerViewController*)appcenter_containerViewControllerForContentView:(UIView*)contentView {
+  NSArray *pageContainers = MSHookIvar<NSArray*>(self, "_allPageContainerViewControllers");
+
+  for (CCUIControlCenterPageContainerViewController *vc in pageContainers) {
+    if (vc.contentViewController.view == contentView) {
+      return vc;
+    }
+  }
+
+  return nil;
+}
+
 %end
 
 %hook CCUIControlCenterContainerView
+
+- (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
+  if (!selectionViewController.searching) {
+    return %orig;
+  }
+
+  CGPoint pointInView = [self convertPoint:point toView:selectionViewController.view];
+
+  return [selectionViewController.view hitTest:pointInView withEvent:event];
+}
 
 - (void)_updateMasks {
   filterPlatterViews = true;
