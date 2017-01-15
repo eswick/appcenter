@@ -309,6 +309,9 @@ static BOOL filterPlatterViews = false;
   animatingAppLaunch = true;
   waitingForAppLaunch = true;
 
+  MSHookIvar<UIViewController*>(self, "_selectedViewController") = [self appcenter_containerViewControllerForContentView:appPage.view];
+  [self _updatePageControl];
+
   [UIView animateWithDuration:0.5
                         delay:0
                       options:UIViewAnimationCurveEaseInOut
@@ -345,17 +348,6 @@ static BOOL filterPlatterViews = false;
 
   [imageView release];
   [appPage release];
-}
-
-- (void)_updatePageControl {
-  if ([MSHookIvar<UIViewController*>(self, "_selectedViewController") isKindOfClass:[ACAppPageViewController class]]) {
-    for (CCUIControlCenterPageContainerViewController *viewController in [self sortedVisibleViewControllers]) {
-      if (viewController.contentViewController == MSHookIvar<UIViewController*>(self, "_selectedViewController")) {
-        MSHookIvar<UIViewController*>(self, "_selectedViewController") = viewController;
-      }
-    }
-  }
-  %orig;
 }
 
 - (void)viewDidLoad {
