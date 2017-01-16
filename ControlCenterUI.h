@@ -67,7 +67,11 @@
 - (void)button:(CCUIControlCenterButton *)arg1 didChangeState:(long long)arg2;
 @end
 
+@class FBSceneHostWrapperView;
+
 @interface CCUIControlCenterViewController (AppCenter)
+
+@property (nonatomic, retain) FBSceneHostWrapperView *animationWrapperView;
 
 - (void)appcenter_appSelected:(NSString*)bundleIdentifier;
 - (void)appcenter_savePages;

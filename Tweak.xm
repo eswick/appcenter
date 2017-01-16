@@ -11,6 +11,7 @@
 #pragma mark Constants
 
 #define REQUESTER @"com.eswick.appcenter"
+#define ANIMATION_REQUESTER @"com.eswick.appcenter.animation"
 #define APP_PAGE_PADDING 5.0
 #define PREFS_PATH [[@"~/Library" stringByExpandingTildeInPath] stringByAppendingPathComponent:@"/Preferences/com.eswick.appcenter.plist"]
 
@@ -191,13 +192,12 @@ static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect) {
 ACAppSelectionPageViewController *selectionViewController = nil;
 NSMutableArray<NSString*> *appPages = nil;
 NSMutableDictionary<NSString*, SBAppSwitcherSnapshotView*> *snapshotViewCache = nil;
-static BOOL animatingAppLaunch = false;
-static BOOL waitingForAppLaunch = false;
 static BOOL filterPlatterViews = false;
 BOOL reloadingControlCenter = false;
 
 %hook CCUIControlCenterViewController
 
+%property (nonatomic, retain) FBSceneHostWrapperView *animationWrapperView;
 
 - (id)pagePlatterViewsForContainerView:(id)arg1 {
   if (filterPlatterViews) {
@@ -304,6 +304,7 @@ BOOL reloadingControlCenter = false;
 
   UIImageView *imageView = [[UIImageView alloc] initWithFrame:initialIconPosition];
   imageView.image = [icon getCachedIconImage:iconFormat];
+  imageView.hidden = true;
 
   [self.view addSubview:imageView];
 
@@ -316,73 +317,58 @@ BOOL reloadingControlCenter = false;
   reloadingControlCenter = true;
   [self controlCenterWillPresent];
   reloadingControlCenter = false;
-  
+
   [self scrollToPage:[self.contentViewControllers count] - 1 animated:false withCompletion:nil];
-
-  SBAppSwitcherSnapshotView *snapshotView = snapshotViewCache[bundleIdentifier];
-
-  snapshotView.transform = transformToRect(snapshotView.bounds, imageView.frame);
-  snapshotView.alpha = 0;
-  [self.view addSubview:snapshotView];
-
-  appPage.view.alpha = 0;
-
-  void (^animationComplete)(void) = ^{
-    dispatch_async(dispatch_get_main_queue(), ^{
-      appPage.view.alpha = 1;
-
-      [UIView animateWithDuration:0.25
-                            delay:0
-                          options:UIViewAnimationCurveEaseInOut
-                       animations:^{
-                         snapshotView.alpha = 0;
-                     } completion:^(BOOL finished) {
-                         [snapshotView removeFromSuperview];
-                     }];
-
-      [[[selectionViewController gridViewController] collectionView] reloadData];
-    });
-  };
-
-  animatingAppLaunch = true;
-  waitingForAppLaunch = true;
 
   MSHookIvar<UIViewController*>(self, "_selectedViewController") = [self appcenter_containerViewControllerForContentView:appPage.view];
   [self _updatePageControl];
 
-  [UIView animateWithDuration:0.5
-                        delay:0
-                      options:UIViewAnimationCurveEaseInOut
-                   animations:^{
-    UIScrollView *pagesScrollView = MSHookIvar<UIScrollView*>(self, "_pagesScrollView");
-    pagesScrollView.contentOffset = CGPointMake(pagesScrollView.frame.size.width * ([self.contentViewControllers count] - 2), 0);
-
-    imageView.transform = CGAffineTransformMakeScale(5.0, 5.0);
-    imageView.center = CGPointMake([[UIScreen mainScreen] bounds].size.width / 2, [[UIScreen mainScreen] bounds].size.height / 2);
-    imageView.alpha = 0;
-
-    UIView *platterView = [MSHookIvar<NSArray<UIViewController*>*>(self, "_allPageContainerViewControllers")[0] view];
-
-    CGFloat scale = platterView.bounds.size.width / [[UIScreen mainScreen] bounds].size.width;
-    CGRect toRect = CGRectApplyAffineTransform([[UIScreen mainScreen] bounds], CGAffineTransformMakeScale(scale, scale));
-    toRect.origin = CGPointMake(CGRectGetMidX([[UIScreen mainScreen] bounds]) - (toRect.size.width / 2), CGRectGetMidY([[UIScreen mainScreen] bounds]) - (toRect.size.height / 2) - APP_PAGE_PADDING);
-
-    snapshotView.transform = transformToRect(snapshotView.bounds, toRect);
-    snapshotView.alpha = 1;
-
-  } completion:^(BOOL completed) {
-    animatingAppLaunch = false;
-    if (!waitingForAppLaunch) {
-      animationComplete();
-    }
-  }];
-
   [application appcenter_startBackgroundingWithCompletion:^(BOOL success) {
-    waitingForAppLaunch = false;
-    if (!animatingAppLaunch) {
-      animationComplete();
-    }
+    dispatch_async(dispatch_get_main_queue(), ^{
+
+      FBSceneHostManager *sceneHostManager = [[application mainScene] contextHostManager];
+      self.animationWrapperView = [sceneHostManager hostViewForRequester:ANIMATION_REQUESTER enableAndOrderFront:true];
+
+      imageView.hidden = false;
+
+      self.animationWrapperView.layer.cornerRadius = 10;
+      self.animationWrapperView.transform = transformToRect(self.animationWrapperView.bounds, imageView.frame);
+      self.animationWrapperView.alpha = 0;
+      self.animationWrapperView.clipsToBounds = true;
+      [self.view addSubview:self.animationWrapperView];
+
+      [UIView animateWithDuration:0.5
+                            delay:0
+                          options:UIViewAnimationCurveEaseInOut
+                       animations:^{
+        UIScrollView *pagesScrollView = MSHookIvar<UIScrollView*>(self, "_pagesScrollView");
+        pagesScrollView.contentOffset = CGPointMake(pagesScrollView.frame.size.width * ([self.contentViewControllers count] - 2), 0);
+
+        imageView.transform = CGAffineTransformMakeScale(5.0, 5.0);
+        imageView.center = CGPointMake([[UIScreen mainScreen] bounds].size.width / 2, [[UIScreen mainScreen] bounds].size.height / 2);
+        imageView.alpha = 0;
+
+        UIView *platterView = [MSHookIvar<NSArray<UIViewController*>*>(self, "_allPageContainerViewControllers")[0] view];
+
+        CGFloat scale = platterView.bounds.size.width / [[UIScreen mainScreen] bounds].size.width;
+        CGRect toRect = CGRectApplyAffineTransform([[UIScreen mainScreen] bounds], CGAffineTransformMakeScale(scale, scale));
+        toRect.origin = CGPointMake(CGRectGetMidX([[UIScreen mainScreen] bounds]) - (toRect.size.width / 2), CGRectGetMidY([[UIScreen mainScreen] bounds]) - (toRect.size.height / 2) - APP_PAGE_PADDING);
+
+        self.animationWrapperView.transform = transformToRect(self.animationWrapperView.bounds, toRect);
+        self.animationWrapperView.alpha = 1;
+
+      } completion:^(BOOL completed) {
+        [[self.animationWrapperView.scene contextHostManager] disableHostingForRequester:ANIMATION_REQUESTER];
+        [[self.animationWrapperView.scene contextHostManager] enableHostingForRequester:REQUESTER orderFront:true];
+        [self.animationWrapperView removeFromSuperview];
+
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"ACAppCellStopActivity" object:self];
+
+        [[[selectionViewController gridViewController] collectionView] reloadData];
+      }];
+    });
   }];
+
 
   [imageView release];
   [appPage release];

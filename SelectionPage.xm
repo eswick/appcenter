@@ -65,6 +65,11 @@
     [self.button addSubview:self.imageView];
     [self.imageView release];
 
+    self.loadingView = [[UIActivityIndicatorView alloc] initWithFrame:self.imageView.frame];
+    self.loadingView.hidesWhenStopped = true;
+    [self.loadingView stopAnimating];
+    [self.button addSubview:self.loadingView];
+
     CGPoint center = self.imageView.center;
     center.x = self.bounds.size.width / 2;
     self.imageView.center = center;
@@ -82,8 +87,19 @@
     [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:[imageView][label]|" options:nil metrics:nil views:@{ @"label" : self.titleLabel, @"imageView" : self.imageView }]];
 
     [[NSNotificationCenter defaultCenter] addObserver:self.button selector:@selector(_updateEffects) name:@"ACUpdateButtonEffects" object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(hideActivity) name:@"ACAppCellStopActivity" object:nil];
   }
   return self;
+}
+
+- (void)showActivity {
+  [self.loadingView startAnimating];
+  self.imageView.highlighted = true;
+}
+
+- (void)hideActivity {
+  [self.loadingView stopAnimating];
+  self.imageView.highlighted = false;
 }
 
 - (void)prepareForReuse {
@@ -118,7 +134,7 @@
   int iconFormat = [icon iconFormatForLocation:0];
 
   self.imageView.image = [icon getCachedIconImage:iconFormat];
-  self.imageView.highlightedImage = [self.imageView.image tintedImageUsingColor:[UIColor colorWithWhite:0.0 alpha:0.3]];
+  self.imageView.highlightedImage = [self.imageView.image tintedImageUsingColor:[UIColor colorWithWhite:0.0 alpha:0.5]];
 
   self.titleLabel.text = [[[%c(SBApplicationController) sharedInstance] applicationWithBundleIdentifier:self.appIdentifier] displayName];
 
@@ -203,6 +219,10 @@
   ACAppIconCell *cell = (ACAppIconCell*)[self.collectionView cellForItemAtIndexPath:indexPath];
 
   ((ACAppSelectionPageViewController*)self.parentViewController).selectedCell = cell;
+
+  if (!cell.button.selected && ![[[%c(SBApplicationController) sharedInstance] applicationWithBundleIdentifier:cell.appIdentifier] isRunning]) {
+    [cell showActivity];
+  }
 
   dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (selectionViewController.searching ? 0.5 : 0.2) * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
     [ccViewController appcenter_appSelected:cell.appIdentifier];

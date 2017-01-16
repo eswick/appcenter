@@ -14,13 +14,14 @@
 @end
 
 @interface FBSceneHostWrapperView : UIView
-
+@property(readonly, retain, nonatomic) FBScene *scene;
 @end
 
 @interface FBSceneHostManager : NSObject
 
 - (void)disableHostingForRequester:(NSString*)requester;
 - (FBSceneHostWrapperView*)hostViewForRequester:(NSString*)requester enableAndOrderFront:(BOOL)arg2;
+- (void)enableHostingForRequester:(id)arg1 orderFront:(BOOL)arg2;
 
 @end
 
