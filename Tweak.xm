@@ -194,6 +194,7 @@ NSMutableDictionary<NSString*, SBAppSwitcherSnapshotView*> *snapshotViewCache = 
 static BOOL animatingAppLaunch = false;
 static BOOL waitingForAppLaunch = false;
 static BOOL filterPlatterViews = false;
+BOOL reloadingControlCenter = false;
 
 %hook CCUIControlCenterViewController
 
@@ -279,7 +280,10 @@ static BOOL filterPlatterViews = false;
           [self _removeContentViewController:contentViewController];
           [appPages removeObject:bundleIdentifier];
           [self appcenter_savePages];
+
+          reloadingControlCenter = true;
           [self controlCenterWillPresent];
+          reloadingControlCenter = false;
         }
       }
     }
@@ -308,7 +312,11 @@ static BOOL filterPlatterViews = false;
   [self _removeContentViewController:selectionViewController];
   [self _addContentViewController:appPage];
   [self _addContentViewController:selectionViewController];
+
+  reloadingControlCenter = true;
   [self controlCenterWillPresent];
+  reloadingControlCenter = false;
+  
   [self scrollToPage:[self.contentViewControllers count] - 1 animated:false withCompletion:nil];
 
   SBAppSwitcherSnapshotView *snapshotView = snapshotViewCache[bundleIdentifier];
@@ -482,30 +490,60 @@ static BOOL filterPlatterViews = false;
 
 %hook SBAppSwitcherModel
 
+%property (nonatomic, retain) NSMutableArray *recentAppIdentifiers;
+
+- (id)initWithUserDefaults:(id)arg1 andIconController:(id)arg2 andApplicationController:(id)arg3 {
+  self = %orig;
+  if (self) {
+    self.recentAppIdentifiers = [NSMutableArray new];
+    NSMutableArray* recentDisplayItems = MSHookIvar<NSMutableArray*>(self, "_recentDisplayItems");
+
+    for (SBDisplayItem *item in recentDisplayItems) {
+      [self.recentAppIdentifiers addObject:item.displayIdentifier];
+    }
+
+    [self.recentAppIdentifiers release];
+  }
+  return self;
+}
+
+- (void)_applicationActivationStateDidChange:(SBApplication*)arg1 withLockScreenViewController:(id)arg2 andLayoutElement:(id)arg3 {
+  %orig;
+
+  if ([arg1 isActivating]) {
+    if ([self.recentAppIdentifiers containsObject:[arg1 bundleIdentifier]]) {
+      [self.recentAppIdentifiers removeObject:[arg1 bundleIdentifier]];
+    }
+    [self.recentAppIdentifiers addObject:[arg1 bundleIdentifier]];
+  }
+}
+
 %new
 - (NSArray<NSString*>*)appcenter_model {
-  NSArray<SBDisplayItem*>* model = [[self mainSwitcherDisplayItems] subarrayWithRange:NSMakeRange(0, MIN(9, [[self mainSwitcherDisplayItems] count]))];
+  NSArray<NSString*>* model = [self.recentAppIdentifiers subarrayWithRange:NSMakeRange(0, MIN(9, [self.recentAppIdentifiers count]))];
   NSMutableArray<NSString*> *filteredModel = [NSMutableArray new];
 
-  for (SBDisplayItem *item in model) {
-    if ([item.displayIdentifier isEqualToString:[[(SpringBoard*)[UIApplication sharedApplication] _accessibilityFrontMostApplication] bundleIdentifier]]) {
+  for (NSString *displayIdentifier in model) {
+    if ([displayIdentifier isEqualToString:[[(SpringBoard*)[UIApplication sharedApplication] _accessibilityFrontMostApplication] bundleIdentifier]]) {
       continue;
     }
 
-    if (![snapshotViewCache objectForKey:[item displayIdentifier]]) {
-      SBAppSwitcherSnapshotView *snapshotView = [%c(SBAppSwitcherSnapshotView) appSwitcherSnapshotViewForDisplayItem:item orientation:UIInterfaceOrientationPortrait preferringDownscaledSnapshot:true loadAsync:false withQueue:dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)];
+    SBApplication *application = [[%c(SBApplicationController) sharedInstance] applicationWithBundleIdentifier:displayIdentifier];
+
+    if (![snapshotViewCache objectForKey:displayIdentifier]) {
+      SBAppSwitcherSnapshotView *snapshotView = [%c(SBAppSwitcherSnapshotView) appSwitcherSnapshotViewForDisplayItem:[self _displayItemForApplication:application] orientation:UIInterfaceOrientationPortrait preferringDownscaledSnapshot:true loadAsync:false withQueue:dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)];
       snapshotView.layer.cornerRadius = 10;
       snapshotView.clipsToBounds = true;
-      snapshotViewCache[[item displayIdentifier]] = snapshotView;
+      snapshotViewCache[displayIdentifier] = snapshotView;
     }
 
     for (NSString *bundleIdentifier in appPages) {
-      if ([item.displayIdentifier isEqualToString:bundleIdentifier]) {
+      if ([displayIdentifier isEqualToString:bundleIdentifier]) {
         goto skip;
       }
     }
 
-    [filteredModel addObject:[item displayIdentifier]];
+    [filteredModel addObject:displayIdentifier];
 skip:
     continue;
   }

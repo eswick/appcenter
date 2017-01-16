@@ -7,6 +7,7 @@
 - (BOOL)isRunning;
 - (NSString*)displayName;
 - (BOOL)hasHiddenTag;
+- (BOOL)isActivating;
 
 @end
 
@@ -68,6 +69,8 @@
 @end
 
 @interface SBAppSwitcherModel (AppCenter)
+
+@property (nonatomic, retain) NSMutableArray *recentAppIdentifiers;
 
 - (NSArray<NSString*>*)appcenter_model;
 
