@@ -12,6 +12,7 @@
 
 #define REQUESTER @"com.eswick.appcenter"
 #define APP_PAGE_PADDING 5.0
+#define PREFS_PATH [[@"~/Library" stringByExpandingTildeInPath] stringByAppendingPathComponent:@"/Preferences/com.eswick.appcenter.plist"]
 
 #pragma mark Helpers
 
@@ -222,9 +223,39 @@ static BOOL filterPlatterViews = false;
   }
 }
 
+%new
+- (void)appcenter_savePages {
+  NSMutableDictionary *dictionary = [NSMutableDictionary dictionaryWithContentsOfFile:PREFS_PATH];
+
+  if (!dictionary) {
+    dictionary = [NSMutableDictionary new];
+  } else {
+    [dictionary retain];
+  }
+
+  dictionary[@"appPages"] = [NSArray arrayWithArray:appPages];
+
+  [dictionary writeToFile:PREFS_PATH atomically:true];
+
+  [dictionary release];
+}
+
 - (void)_loadPages {
   %orig;
   snapshotViewCache = [NSMutableDictionary new];
+  appPages = [NSMutableArray new];
+
+  NSMutableDictionary *dictionary = [NSMutableDictionary dictionaryWithContentsOfFile:PREFS_PATH];
+
+
+  if (dictionary) {
+    for (NSString *bundleID in dictionary[@"appPages"]) {
+      [appPages addObject:bundleID];
+      ACAppPageViewController *appPage = [[ACAppPageViewController alloc] initWithBundleIdentifier:bundleID];
+      [self _addContentViewController:appPage];
+    }
+  }
+
   selectionViewController = [[ACAppSelectionPageViewController alloc] initWithNibName:nil bundle:nil];
   [self _addContentViewController:selectionViewController];
   [selectionViewController release];
@@ -232,9 +263,6 @@ static BOOL filterPlatterViews = false;
 
 %new
 - (void)appcenter_appSelected:(NSString*)bundleIdentifier {
-  if (!appPages) {
-    appPages = [NSMutableArray new];
-  }
 
   if ([appPages containsObject:bundleIdentifier]) {
 
@@ -250,6 +278,7 @@ static BOOL filterPlatterViews = false;
 
           [self _removeContentViewController:contentViewController];
           [appPages removeObject:bundleIdentifier];
+          [self appcenter_savePages];
           [self controlCenterWillPresent];
         }
       }
@@ -259,6 +288,7 @@ static BOOL filterPlatterViews = false;
   }
 
   [appPages addObject:bundleIdentifier];
+  [self appcenter_savePages];
 
   SBApplication *application = [[%c(SBApplicationController) sharedInstance] applicationWithBundleIdentifier:bundleIdentifier];
 

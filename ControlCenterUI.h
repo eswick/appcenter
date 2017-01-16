@@ -70,6 +70,7 @@
 @interface CCUIControlCenterViewController (AppCenter)
 
 - (void)appcenter_appSelected:(NSString*)bundleIdentifier;
+- (void)appcenter_savePages;
 - (CCUIControlCenterPageContainerViewController*)appcenter_containerViewControllerForContentView:(UIView*)contentView;
 
 @end
