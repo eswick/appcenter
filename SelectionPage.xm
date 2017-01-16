@@ -8,7 +8,8 @@
 @implementation ACSearchButton
 
 - (id)init {
-  self = [super initWithFrame:CGRectMake(0, 0, 25, 25)];
+  CGSize size = [ACManualLayout searchButtonSize];
+  self = [super initWithFrame:CGRectMake(0, 0, size.width, size.height)];
   if (self) {
     UIImage *image = [UIImage imageWithContentsOfFile:@"/Library/Application Support/App Center/mag.png"];
     [self setImage:image forState:UIControlStateNormal];
@@ -17,7 +18,7 @@
 }
 
 - (CGSize)intrinsicContentSize {
-  return CGSizeMake(25, 25);
+  return [ACManualLayout searchButtonSize];
 }
 
 @end
@@ -34,7 +35,7 @@
 }
 
 - (CGSize)intrinsicContentSize {
-  return CGSizeMake(35, 35);
+  return [ACManualLayout appCenterButtonSize];
 }
 
 @end
@@ -72,7 +73,7 @@
     self.titleLabel.textColor = [UIColor whiteColor];
     self.titleLabel.textAlignment = NSTextAlignmentCenter;
     self.titleLabel.adjustsFontSizeToFitWidth = false;
-    self.titleLabel.font = [UIFont systemFontOfSize:13];
+    self.titleLabel.font = [UIFont systemFontOfSize:[ACManualLayout appDisplayNameFontSize]];
     self.titleLabel.translatesAutoresizingMaskIntoConstraints = false;
 
     [self.button addSubview:self.titleLabel];
@@ -117,7 +118,7 @@
   int iconFormat = [icon iconFormatForLocation:0];
 
   self.imageView.image = [icon getCachedIconImage:iconFormat];
-  //self.imageView.highlightedImage = [self.imageView.image tintedImageUsingColor:[UIColor colorWithWhite:0.0 alpha:0.3]];
+  self.imageView.highlightedImage = [self.imageView.image tintedImageUsingColor:[UIColor colorWithWhite:0.0 alpha:0.3]];
 
   self.titleLabel.text = [[[%c(SBApplicationController) sharedInstance] applicationWithBundleIdentifier:self.appIdentifier] displayName];
 
@@ -227,7 +228,7 @@
 
 - (void)fixButtonEffects {
   // CCUIControlCenterButton is weird.
-  
+
   [[NSNotificationCenter defaultCenter] postNotificationName:@"ACUpdateButtonEffects" object:self];
 }
 
@@ -255,16 +256,33 @@
     [self.titleLabel setMinimumScaleFactor:(float)0x3f400000];
     [self.titleLabel setTranslatesAutoresizingMaskIntoConstraints:false];
     self.titleLabel.text = @"App Center";
-    self.titleLabel.font = [UIFont systemFontOfSize:16.5 weight:UIFontWeightMedium];
-    self.titleLabel.alpha = 0.999;
+    self.titleLabel.font = [UIFont systemFontOfSize:[ACManualLayout appCenterLabelFontSize] weight:UIFontWeightMedium];
 
     self.searchButton = [[ACSearchButton alloc] init];
     [self.searchButton setTranslatesAutoresizingMaskIntoConstraints:false];
+    self.searchButton.alpha = 0.7;
 
     self.searchBar = [[UISearchBar alloc] init];
     self.searchBar.translatesAutoresizingMaskIntoConstraints = false;
     self.searchBar.alpha = 0.0;
+    self.searchBar.searchBarStyle = UISearchBarStyleMinimal;
+    self.searchBar.tintColor = [UIColor blackColor];
     self.searchBar.showsCancelButton = true;
+    // Tint the magnifying glass and clear button the same color as the search bar
+    NSArray *searchBarSubViews = [[self.searchBar.subviews objectAtIndex:0] subviews];
+    for (UIView *view in searchBarSubViews) {
+      if([view isKindOfClass:[UITextField class]]) {
+        UITextField *textField = (UITextField*)view;
+        UIImageView *imgView = (UIImageView*)textField.leftView;
+        imgView.image = [imgView.image imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+        imgView.tintColor = self.searchBar.tintColor;
+
+        UIButton *btnClear = (UIButton*)[textField valueForKey:@"clearButton"];
+        [btnClear setImage:[btnClear.imageView.image imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate] forState:UIControlStateNormal];
+        btnClear.tintColor = self.searchBar.tintColor;
+      }
+    }
+    [self.searchBar reloadInputViews];
 
     UIImage *backgroundImage = [UIImage new];
     [self.searchBar setBackgroundImage:backgroundImage];
@@ -291,11 +309,13 @@
     NSMutableArray *constraints = [NSMutableArray new];
 
     [constraints addObjectsFromArray:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[iconButton]" options:nil metrics:nil views:views]];
-    [constraints addObjectsFromArray:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|-(-6)-[iconButton]" options:nil metrics:nil views:views]];
+    NSString *iconButtonTopSpacingVF = [NSString stringWithFormat:@"V:|-(%f)-[iconButton]", [ACManualLayout appCenterButtonTopSpacing]];
+    [constraints addObjectsFromArray:[NSLayoutConstraint constraintsWithVisualFormat:iconButtonTopSpacingVF options:nil metrics:nil views:views]];
     [constraints addObjectsFromArray:[NSLayoutConstraint constraintsWithVisualFormat:@"H:[iconButton]-(8)-[titleLabel]" options:nil metrics:nil views:views]];
     [constraints addObjectsFromArray:[NSLayoutConstraint constraintsWithVisualFormat:@"H:[searchButton]|" options:nil metrics:nil views:views]];
-    [constraints addObjectsFromArray:[NSLayoutConstraint constraintsWithVisualFormat:@"H:[iconButton]-8-[searchBar]|" options:nil metrics:nil views:views]];
+    [constraints addObjectsFromArray:[NSLayoutConstraint constraintsWithVisualFormat:@"H:[iconButton][searchBar]-(-8)-|" options:nil metrics:nil views:views]];
     [constraints addObject:[NSLayoutConstraint constraintWithItem:self.searchBar attribute:NSLayoutAttributeCenterY relatedBy:NSLayoutRelationEqual toItem:self.iconButton attribute:NSLayoutAttributeCenterY multiplier:1.0 constant:0]];
+    [constraints addObject:[NSLayoutConstraint constraintWithItem:self.searchButton attribute:NSLayoutAttributeCenterY relatedBy:NSLayoutRelationEqual toItem:self.iconButton attribute:NSLayoutAttributeCenterY multiplier:1.0 constant:0]];
 
     CGFloat labelBaselineOffset = [ACManualLayout appCenterLabelOffset];
     NSLayoutConstraint *labelFirstBaseline = [NSLayoutConstraint constraintWithItem:self.titleLabel attribute:NSLayoutAttributeFirstBaseline relatedBy:NSLayoutRelationEqual toItem:self attribute:NSLayoutAttributeTop multiplier:1.0 constant:labelBaselineOffset];
@@ -365,7 +385,7 @@
   [self.gridViewController fixButtonEffects];
 
   [UIView animateWithDuration:0.25 animations:^{
-    self.view.searchBar.alpha = 1.0;
+    self.view.searchBar.alpha = 0.9;
     self.view.searchButton.alpha = 0.0;
     self.view.titleLabel.alpha = 0.0;
   }];
@@ -382,7 +402,7 @@
 
   [UIView animateWithDuration:0.25 animations:^{
     self.view.searchBar.alpha = 0.0;
-    self.view.searchButton.alpha = 1.0;
+    self.view.searchButton.alpha = 0.7;
     self.view.titleLabel.alpha = 1.0;
   }];
 
