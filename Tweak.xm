@@ -400,22 +400,26 @@ BOOL reloadingControlCenter = false;
 
   UIViewController *containerVC = [self appcenter_containerViewControllerForContentView:selectionViewController.view];
 
-  [UIView animateWithDuration:0.5 animations:^{
-    CGRect frame = containerVC.view.frame;
-    frame.origin.y = -keyboardSize.height;
-    containerVC.view.frame = frame;
-  }];
+  if (selectionViewController.searching) {
+    [UIView animateWithDuration:0.5 animations:^{
+      CGRect frame = containerVC.view.frame;
+      frame.origin.y = -keyboardSize.height;
+      containerVC.view.frame = frame;
+    }];
+  }
 }
 
 %new
 - (void)keyboardWillHide:(NSNotification*)notification {
   UIViewController *containerVC = [self appcenter_containerViewControllerForContentView:selectionViewController.view];
 
-  [UIView animateWithDuration:0.5 animations:^{
-    CGRect frame = containerVC.view.frame;
-    frame.origin.y = 0;
-    containerVC.view.frame = frame;
-  }];
+  if (selectionViewController.searching) {
+    [UIView animateWithDuration:0.5 animations:^{
+      CGRect frame = containerVC.view.frame;
+      frame.origin.y = 0;
+      containerVC.view.frame = frame;
+    }];
+  }
 }
 
 %new
