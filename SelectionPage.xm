@@ -62,7 +62,13 @@
     CGFloat appIconScale = [ACManualLayout appIconScale];
     self.imageView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, [%c(SBIconView) defaultIconImageSize].width * appIconScale, [%c(SBIconView) defaultIconImageSize].height * appIconScale)];
     self.imageView.center = CGPointMake(self.contentView.bounds.size.width / 2, (self.contentView.bounds.size.height * 0.80) / 2);
+    UIImage *dropShadowImage = [UIImage imageWithContentsOfFile:@"/Library/Application Support/App Center/app icon drop shadow.png"];
+    UIImageView *dropShadowView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, [%c(SBIconView) defaultIconImageSize].width * 1.1, [%c(SBIconView) defaultIconImageSize].height * 1.1)];
+    dropShadowView.center = CGPointMake(self.contentView.bounds.size.width / 2, (self.contentView.bounds.size.height * 0.80) / 2);
+    dropShadowView.image = dropShadowImage;
+    [self.button addSubview:dropShadowView];
     [self.button addSubview:self.imageView];
+    [dropShadowView release];
     [self.imageView release];
 
     self.loadingView = [[UIActivityIndicatorView alloc] initWithFrame:self.imageView.frame];
@@ -290,7 +296,7 @@
 
     self.searchButton = [[ACSearchButton alloc] init];
     [self.searchButton setTranslatesAutoresizingMaskIntoConstraints:false];
-    self.searchButton.alpha = 0.7;
+    self.searchButton.alpha = 1.0;
 
     self.searchBar = [[UISearchBar alloc] init];
     self.searchBar.translatesAutoresizingMaskIntoConstraints = false;
@@ -432,7 +438,7 @@
 
   [UIView animateWithDuration:0.25 animations:^{
     self.view.searchBar.alpha = 0.0;
-    self.view.searchButton.alpha = 0.7;
+    self.view.searchButton.alpha = 1.0;
     self.view.titleLabel.alpha = 1.0;
   }];
 
