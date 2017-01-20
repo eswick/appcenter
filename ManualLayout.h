@@ -13,4 +13,6 @@
 +(CGFloat)collectionViewFlowLayoutItemSpacing;
 +(CGFloat)appDisplayNameFontSize;
 
++(CGFloat)ccEdgeSpacing;
+
 @end

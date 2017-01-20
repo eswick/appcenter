@@ -43,6 +43,10 @@
   return 13 * [ACManualLayout relativeTo47InchScale];
 }
 
++(CGFloat)ccEdgeSpacing {
+  return [ACManualLayout isTinyScreen] ? 8.5 * [ACManualLayout relativeTo47InchScale] : [ACManualLayout isSmallScreen] ? 8 : 9 ;
+}
+
 // Helpers
 +(CGSize)screenSize {
   return UIScreen.mainScreen.bounds.size;
