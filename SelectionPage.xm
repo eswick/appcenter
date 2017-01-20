@@ -174,6 +174,9 @@
       if ([appPages containsObject:[application bundleIdentifier]]) {
         continue;
       }
+      if ([key isEqualToString:[(SpringBoard*)[%c(SpringBoard) sharedApplication] _accessibilityFrontMostApplication].bundleIdentifier]) {
+        continue;
+      }
       [result addObject:application];
     }
   }
