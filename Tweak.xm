@@ -93,12 +93,19 @@ static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect) {
 
 - (void)controlCenterDidDismiss {
   [self.sceneHostManager disableHostingForRequester:REQUESTER];
-  [self.app appcenter_stopBackgroundingWithCompletion:nil];
+
+  if (![self.app.bundleIdentifier isEqualToString:[[(SpringBoard*)[%c(SpringBoard) sharedApplication] _accessibilityFrontMostApplication] bundleIdentifier]]) {
+    [self.app appcenter_stopBackgroundingWithCompletion:nil];
+  }
 }
 
 - (void)controlCenterWillPresent {
   [self.app appcenter_startBackgroundingWithCompletion:^void(BOOL success) {
     dispatch_async(dispatch_get_main_queue(), ^{
+      if ([self.app.bundleIdentifier isEqualToString:[[(SpringBoard*)[%c(SpringBoard) sharedApplication] _accessibilityFrontMostApplication] bundleIdentifier]]) {
+        return;
+      }
+
       self.sceneHostManager = [[self.app mainScene] contextHostManager];
       self.hostView = [self.sceneHostManager hostViewForRequester:REQUESTER enableAndOrderFront:true];
 
@@ -273,7 +280,9 @@ BOOL reloadingControlCenter = false;
 
           ACAppPageViewController *appPageViewController = (ACAppPageViewController*)contentViewController;
 
-          [[appPageViewController app] appcenter_stopBackgroundingWithCompletion:nil];
+          if (![bundleIdentifier isEqualToString:[[(SpringBoard*)[%c(SpringBoard) sharedApplication] _accessibilityFrontMostApplication] bundleIdentifier]]) {
+            [[appPageViewController app] appcenter_stopBackgroundingWithCompletion:nil];
+          }
 
           [appPageViewController.sceneHostManager disableHostingForRequester:REQUESTER];
 
