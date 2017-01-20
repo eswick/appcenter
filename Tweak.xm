@@ -12,6 +12,7 @@
 
 #define REQUESTER @"com.eswick.appcenter"
 #define ANIMATION_REQUESTER @"com.eswick.appcenter.animation"
+#define NOTIFICATION_REVEAL_ID @"com.eswick.appcenter.notification.revealpercentage"
 #define APP_PAGE_PADDING 5.0
 #define PREFS_PATH [[@"~/Library" stringByExpandingTildeInPath] stringByAppendingPathComponent:@"/Preferences/com.eswick.appcenter.plist"]
 
@@ -60,35 +61,39 @@ static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect) {
     if (!self.app) {
       return nil;
     }
+
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(controlCenterDidSetRevealPercentage:)
+                                                 name:NOTIFICATION_REVEAL_ID
+                                               object:nil];
   }
   return self;
 }
 
+- (void)dealloc {
+  [[NSNotificationCenter defaultCenter] removeObserver:self];
+
+  [super dealloc];
+}
+
 - (void)controlCenterDidFinishTransition {
   self.controlCenterTransitioning = false;
-
-  [UIView animateWithDuration:0.25 animations:^{
-    CGRect frame = self.hostView.frame;
-
-    frame.origin.x = self.view.frame.origin.x;
-    frame.origin.y = [self.view convertPoint:CGPointMake(0, CGRectGetMidY([[UIScreen mainScreen] bounds])) fromView:[UIApplication sharedApplication].keyWindow].y - (frame.size.height / 2) - APP_PAGE_PADDING;
-
-    self.hostView.frame = frame;
-  }];
 }
 
 - (void)controlCenterWillBeginTransition {
   self.controlCenterTransitioning = true;
+}
 
-  [UIView animateWithDuration:0.25 animations:^{
-    CGRect frame = self.hostView.frame;
+- (void)controlCenterDidSetRevealPercentage:(NSNotification*)notification {
+  CGRect frame = self.hostView.frame;
 
-    frame.origin.x = self.view.frame.origin.x;
-    frame.origin.y = 0;
+  CGFloat openedY = [self.view convertPoint:CGPointMake(0, CGRectGetMidY([[UIScreen mainScreen] bounds])) fromView:[UIApplication sharedApplication].keyWindow].y - (frame.size.height / 2) - APP_PAGE_PADDING;
+  CGFloat percentage = MIN(1.0, [[notification userInfo][@"revealPercentage"] floatValue]);
 
-    self.hostView.frame = frame;
-  }];
+  frame.origin.x = self.view.frame.origin.x;
+  frame.origin.y = openedY * percentage;
 
+  self.hostView.frame = frame;
 }
 
 - (void)controlCenterDidDismiss {
@@ -462,6 +467,11 @@ BOOL reloadingControlCenter = false;
   filterPlatterViews = true;
   %orig;
   filterPlatterViews = false;
+}
+
+- (void)setRevealPercentage:(CGFloat)revealPercentage {
+  [[NSNotificationCenter defaultCenter] postNotificationName:NOTIFICATION_REVEAL_ID object:nil userInfo:@{ @"revealPercentage" : @(revealPercentage) }];
+  %orig;
 }
 
 %end
