@@ -97,7 +97,6 @@
     [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[label]|" options:nil metrics:nil views:@{ @"label" : self.titleLabel }]];
     [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:[imageView][label]|" options:nil metrics:nil views:@{ @"label" : self.titleLabel, @"imageView" : self.imageView }]];
 
-    [[NSNotificationCenter defaultCenter] addObserver:self.button selector:@selector(_updateEffects) name:@"ACUpdateButtonEffects" object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(hideActivity) name:@"ACAppCellStopActivity" object:nil];
   }
   return self;
@@ -184,6 +183,12 @@
   return [result autorelease];
 }
 
+- (void)collectionView:(UICollectionView *)collectionView didEndDisplayingCell:(UICollectionViewCell *)cell forItemAtIndexPath:(NSIndexPath *)indexPath {
+  ACAppIconCell *iconCell = (ACAppIconCell*)cell;
+
+  [iconCell.button _updateEffects];
+}
+
 - (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section {
   if (selectionViewController.searching) {
     return MIN([[self searchResults] count], 9);
@@ -268,12 +273,6 @@
   self.view = self.collectionView;
 
   [layout release];
-}
-
-- (void)fixButtonEffects {
-  // CCUIControlCenterButton is weird.
-
-  [[NSNotificationCenter defaultCenter] postNotificationName:@"ACUpdateButtonEffects" object:self];
 }
 
 @end
@@ -426,7 +425,6 @@
   self.searching = true;
 
   [self.gridViewController.collectionView reloadData];
-  [self.gridViewController fixButtonEffects];
 
   [UIView animateWithDuration:0.25 animations:^{
     self.view.searchBar.alpha = 0.9;
@@ -465,12 +463,10 @@
    [searchBar resignFirstResponder];
    [self endSearching];
    [self.gridViewController.collectionView reloadData];
-   [self.gridViewController fixButtonEffects];
 }
 
 - (void)searchBar:(UISearchBar *)searchBar textDidChange:(NSString *)searchText {
   [self.gridViewController.collectionView reloadData];
-  [self.gridViewController fixButtonEffects];
 }
 
 - (void)controlCenterWillPresent {

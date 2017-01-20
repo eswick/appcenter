@@ -27,8 +27,6 @@
 
 @interface ACAppSelectionGridViewController : UICollectionViewController
 
-- (void)fixButtonEffects;
-
 @end
 
 @interface ACAppSelectionContainerView : UIView
