@@ -78,3 +78,22 @@
 - (CCUIControlCenterPageContainerViewController*)appcenter_containerViewControllerForContentView:(UIView*)contentView;
 
 @end
+
+@class CCUIControlCenterContainerView;
+@protocol CCUIControlCenterSystemAgent;
+
+@protocol CCUIControlCenterContainerViewDelegate <NSObject>
+- (id <CCUIControlCenterSystemAgent>)controlCenterSystemAgent;
+- (struct UIEdgeInsets)pageInsetForContainerView:(CCUIControlCenterContainerView *)arg1;
+- (struct UIEdgeInsets)marginInsetForContainerView:(CCUIControlCenterContainerView *)arg1;
+- (UIPageControl *)pageControlForContainerView:(CCUIControlCenterContainerView *)arg1;
+- (UIScrollView *)scrollViewForContainerView:(CCUIControlCenterContainerView *)arg1;
+- (NSArray *)pagePlatterViewsForContainerView:(CCUIControlCenterContainerView *)arg1;
+- (double)contentHeightForContainerView:(CCUIControlCenterContainerView *)arg1;
+@end
+
+@interface CCUIControlCenterContainerView : UIView
+
+@property (nonatomic, assign) id <CCUIControlCenterContainerViewDelegate> delegate;
+
+@end

@@ -32,6 +32,8 @@ static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect) {
 
 @interface ACAppPageView : UIView
 
+@property (nonatomic, retain) NSString *appIdentifier;
+
 @end
 
 @implementation ACAppPageView
@@ -45,6 +47,7 @@ static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect) {
 @property (nonatomic, retain) FBSceneHostManager *sceneHostManager;
 @property (nonatomic, retain) FBSceneHostWrapperView *hostView;
 @property (nonatomic, assign) BOOL controlCenterTransitioning;
+@property (nonatomic, retain) ACAppPageView *view;
 
 - (id)initWithBundleIdentifier:(NSString*)bundleIdentifier;
 - (void)controlCenterDidFinishTransition;
@@ -53,6 +56,7 @@ static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect) {
 
 @implementation ACAppPageViewController
 @synthesize delegate;
+@dynamic view;
 
 - (id)initWithBundleIdentifier:(NSString*)bundleIdentifier {
   self = [super init];
@@ -150,6 +154,7 @@ static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect) {
 - (void)loadView {
   ACAppPageView *pageView = [[ACAppPageView alloc] init];
   self.view = pageView;
+  self.view.appIdentifier = [self.app bundleIdentifier];
   [pageView release];
 }
 
@@ -476,12 +481,28 @@ BOOL reloadingControlCenter = false;
   %orig;
 }
 
+- (void)controlCenterWillPresent {
+  %orig;
+  
+  NSArray *platterViews = [[self delegate] pagePlatterViewsForContainerView:self];
+
+  for (CCUIControlCenterPagePlatterView *platterView in platterViews) {
+    [platterView layoutSubviews];
+  }
+}
+
 %end
 
 %hook CCUIControlCenterPagePlatterView
 
 - (void)layoutSubviews {
   if ([self.contentView isKindOfClass:[ACAppPageView class]]) {
+    if ([[(ACAppPageView*)self.contentView appIdentifier] isEqualToString:[[(SpringBoard*)[%c(SpringBoard) sharedApplication] _accessibilityFrontMostApplication] bundleIdentifier]]) {
+      MSHookIvar<UIView*>(self, "_baseMaterialView").hidden = false;
+      MSHookIvar<UIView*>(self, "_whiteLayerView").hidden = false;
+      %orig;
+      return;
+    }
     MSHookIvar<UIView*>(self, "_baseMaterialView").hidden = true;
     MSHookIvar<UIView*>(self, "_whiteLayerView").hidden = true;
   } else {
@@ -491,6 +512,9 @@ BOOL reloadingControlCenter = false;
 
 - (void)_recursivelyVisitSubviewsOfView:(id)arg1 forPunchedThroughView:(id)arg2 collectingMasksIn:(id)arg3 {
   if ([self.contentView isKindOfClass:[ACAppPageView class]]) {
+    if ([[(ACAppPageView*)self.contentView appIdentifier] isEqualToString:[[(SpringBoard*)[%c(SpringBoard) sharedApplication] _accessibilityFrontMostApplication] bundleIdentifier]]) {
+      %orig;
+    }
     return;
   }
 
