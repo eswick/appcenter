@@ -11,10 +11,12 @@ include $(THEOS)/makefiles/common.mk
 
 TWEAK_NAME = AppCenter
 AppCenter_FILES = Tweak.xm SelectionPage.xm UIImage+Tint.m ManualLayout.xm
-AppCenter_PRIVATE_FRAMEWORKS = ControlCenterUI ControlCenterUIKit FrontBoardServices
 
 ifdef SIMULATOR
 AppCenter_INSTALL_PATH = /opt/simject
+AppCenter_PRIVATE_FRAMEWORKS = ControlCenterUI ControlCenterUIKit FrontBoardServices
+else
+AppCenter_LDFLAGS = -undefined dynamic_lookup
 endif
 
 include $(THEOS_MAKE_PATH)/tweak.mk
