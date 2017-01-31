@@ -15,6 +15,7 @@
 #define ANIMATION_REQUESTER @"com.eswick.appcenter.animation"
 #define NOTIFICATION_REVEAL_ID @"com.eswick.appcenter.notification.revealpercentage"
 #define APP_PAGE_PADDING 5.0
+#define SCALE_MULTIPLIER 0.90
 #define PREFS_PATH [[@"~/Library" stringByExpandingTildeInPath] stringByAppendingPathComponent:@"/Preferences/com.eswick.appcenter.plist"]
 
 #pragma mark Helpers
@@ -95,7 +96,6 @@ static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect) {
   CGFloat openedY = [self.view convertPoint:CGPointMake(0, CGRectGetMidY([[UIScreen mainScreen] bounds])) fromView:[UIApplication sharedApplication].keyWindow].y - (frame.size.height / 2) - APP_PAGE_PADDING;
   CGFloat percentage = MIN(1.0, [[notification userInfo][@"revealPercentage"] floatValue]);
 
-  frame.origin.x = self.view.frame.origin.x;
   frame.origin.y = openedY * percentage;
 
   self.hostView.frame = frame;
@@ -124,6 +124,7 @@ static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect) {
       self.hostView.backgroundColor = [UIColor blackColor];
 
       CGFloat scale = self.view.bounds.size.width / [[UIScreen mainScreen] bounds].size.width;
+      scale = scale * SCALE_MULTIPLIER;
       self.hostView.transform = CGAffineTransformMakeScale(scale, scale);
 
       self.hostView.alpha = 0.0;
@@ -140,7 +141,7 @@ static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect) {
 - (void)viewWillLayoutSubviews {
   CGRect frame = self.hostView.frame;
 
-  frame.origin.x = self.view.frame.origin.x;
+  frame.origin.x = CGRectGetMidX(self.view.bounds) - (self.hostView.frame.size.width / 2);
 
   if (self.controlCenterTransitioning) {
     frame.origin.y = 0;
@@ -371,6 +372,7 @@ BOOL reloadingControlCenter = false;
         UIView *platterView = [MSHookIvar<NSArray<UIViewController*>*>(self, "_allPageContainerViewControllers")[0] view];
 
         CGFloat scale = platterView.bounds.size.width / [[UIScreen mainScreen] bounds].size.width;
+        scale = scale * SCALE_MULTIPLIER;
         CGRect toRect = CGRectApplyAffineTransform([[UIScreen mainScreen] bounds], CGAffineTransformMakeScale(scale, scale));
         toRect.origin = CGPointMake(CGRectGetMidX([[UIScreen mainScreen] bounds]) - (toRect.size.width / 2), CGRectGetMidY([[UIScreen mainScreen] bounds]) - (toRect.size.height / 2) - APP_PAGE_PADDING);
 
@@ -483,7 +485,7 @@ BOOL reloadingControlCenter = false;
 
 - (void)controlCenterWillPresent {
   %orig;
-  
+
   NSArray *platterViews = [[self delegate] pagePlatterViewsForContainerView:self];
 
   for (CCUIControlCenterPagePlatterView *platterView in platterViews) {
