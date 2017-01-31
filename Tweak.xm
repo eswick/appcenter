@@ -15,7 +15,7 @@
 #define ANIMATION_REQUESTER @"com.eswick.appcenter.animation"
 #define NOTIFICATION_REVEAL_ID @"com.eswick.appcenter.notification.revealpercentage"
 #define APP_PAGE_PADDING 5.0
-#define SCALE_MULTIPLIER 0.90
+#define SCALE_MULTIPLIER 0.925
 #define PREFS_PATH [[@"~/Library" stringByExpandingTildeInPath] stringByAppendingPathComponent:@"/Preferences/com.eswick.appcenter.plist"]
 
 #pragma mark Helpers
