@@ -34,10 +34,53 @@ static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect) {
 @interface ACAppPageView : UIView
 
 @property (nonatomic, retain) NSString *appIdentifier;
+@property (nonatomic, retain) NSTimer *visibleTimer;
 
 @end
 
 @implementation ACAppPageView
+
+- (void)didMoveToWindow {
+  [self setUserInteractionEnabledForAllViewsInView:self enabled:false];
+  self.visibleTimer = [NSTimer scheduledTimerWithTimeInterval:1
+                                     target:self
+                                   selector:@selector(checkVisibilityAndUpdateInteractionEnabled)
+                                   userInfo:nil
+                                    repeats:true];
+}
+- (void)checkVisibilityAndUpdateInteractionEnabled {
+  if ([self isVisible]) {
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+      [self setUserInteractionEnabledForAllViewsInView:self enabled:true];
+    });
+  } else {
+    [self setUserInteractionEnabledForAllViewsInView:self enabled:false];
+  }
+}
+- (BOOL)isVisible {
+  return [self isVisibleView:self inView: self.superview];
+}
+- (BOOL)isVisibleView:(UIView*)view inView:(UIView*)inView {
+  if (!inView) { return true; }
+  CGRect viewFrame = [inView convertRect:view.bounds fromView: view];
+  if (CGRectIntersectsRect(viewFrame, inView.bounds)) {
+    return [self isVisibleView:view inView:inView.superview];
+  }
+  return false;
+}
+
+- (void)setUserInteractionEnabledForAllViewsInView:(UIView*)view enabled:(BOOL)enabled {
+  view.userInteractionEnabled = enabled;
+  for (UIView *subview in view.subviews) {
+    [self setUserInteractionEnabledForAllViewsInView:subview enabled:enabled];
+  }
+}
+
+- (void)dealloc {
+  [self.visibleTimer invalidate];
+  self.visibleTimer = nil;
+  [super dealloc];
+}
 
 @end
 
