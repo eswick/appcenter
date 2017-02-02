@@ -281,6 +281,30 @@ BOOL reloadingControlCenter = false;
   [selectionViewController release];
 }
 
+// TODO fix page not disappearing until cc is manually reopened
+%new
+- (void)appcenter_removeAllPages {
+  if ([appPages count] > 0) {
+    for (UIViewController *contentViewController in [self contentViewControllers]) {
+      if ([contentViewController isKindOfClass:[ACAppPageViewController class]]) {
+        NSString *bundleIdentifier = [[(ACAppPageViewController*)contentViewController app] bundleIdentifier];
+        ACAppPageViewController *appPageViewController = (ACAppPageViewController*)contentViewController;
+        if (![bundleIdentifier isEqualToString:[[(SpringBoard*)[%c(SpringBoard) sharedApplication] _accessibilityFrontMostApplication] bundleIdentifier]]) {
+          [[appPageViewController app] appcenter_stopBackgroundingWithCompletion:nil];
+        }
+        [appPageViewController.sceneHostManager disableHostingForRequester:REQUESTER];
+
+        [self _removeContentViewController:contentViewController];
+        [appPages removeObject:bundleIdentifier];
+      }
+    }
+    [self appcenter_savePages];
+    reloadingControlCenter = true;
+    [self controlCenterWillPresent];
+    reloadingControlCenter = false;
+  }
+}
+
 %new
 - (void)appcenter_appSelected:(NSString*)bundleIdentifier {
 
@@ -419,6 +443,7 @@ BOOL reloadingControlCenter = false;
 %new
 - (void)keyboardWillShow:(NSNotification*)notification {
   CGSize keyboardSize = [[[notification userInfo] objectForKey:UIKeyboardFrameBeginUserInfoKey] CGRectValue].size;
+  [[NSNotificationCenter defaultCenter] postNotificationName:@"KeyboardWillShow" object:nil];
 
   UIViewController *containerVC = [self appcenter_containerViewControllerForContentView:selectionViewController.view];
 
