@@ -14,6 +14,8 @@
 #define REQUESTER @"com.eswick.appcenter"
 #define ANIMATION_REQUESTER @"com.eswick.appcenter.animation"
 #define NOTIFICATION_REVEAL_ID @"com.eswick.appcenter.notification.revealpercentage"
+#define SCROLL_BEGIN_ID @"com.eswick.appcenter.notification.scrollbegin"
+#define SCROLL_END_ID @"com.eswick.appcenter.notification.scrollend"
 #define APP_PAGE_PADDING 5.0
 #define SCALE_MULTIPLIER 0.925
 #define PREFS_PATH [[@"~/Library" stringByExpandingTildeInPath] stringByAppendingPathComponent:@"/Preferences/com.eswick.appcenter.plist"]
@@ -34,53 +36,10 @@ static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect) {
 @interface ACAppPageView : UIView
 
 @property (nonatomic, retain) NSString *appIdentifier;
-@property (nonatomic, retain) NSTimer *visibleTimer;
 
 @end
 
 @implementation ACAppPageView
-
-- (void)didMoveToWindow {
-  [self setUserInteractionEnabledForAllViewsInView:self enabled:false];
-  self.visibleTimer = [NSTimer scheduledTimerWithTimeInterval:1
-                                     target:self
-                                   selector:@selector(checkVisibilityAndUpdateInteractionEnabled)
-                                   userInfo:nil
-                                    repeats:true];
-}
-- (void)checkVisibilityAndUpdateInteractionEnabled {
-  if ([self isVisible]) {
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
-      [self setUserInteractionEnabledForAllViewsInView:self enabled:true];
-    });
-  } else {
-    [self setUserInteractionEnabledForAllViewsInView:self enabled:false];
-  }
-}
-- (BOOL)isVisible {
-  return [self isVisibleView:self inView: self.superview];
-}
-- (BOOL)isVisibleView:(UIView*)view inView:(UIView*)inView {
-  if (!inView) { return true; }
-  CGRect viewFrame = [inView convertRect:view.bounds fromView: view];
-  if (CGRectIntersectsRect(viewFrame, inView.bounds)) {
-    return [self isVisibleView:view inView:inView.superview];
-  }
-  return false;
-}
-
-- (void)setUserInteractionEnabledForAllViewsInView:(UIView*)view enabled:(BOOL)enabled {
-  view.userInteractionEnabled = enabled;
-  for (UIView *subview in view.subviews) {
-    [self setUserInteractionEnabledForAllViewsInView:subview enabled:enabled];
-  }
-}
-
-- (void)dealloc {
-  [self.visibleTimer invalidate];
-  self.visibleTimer = nil;
-  [super dealloc];
-}
 
 @end
 
@@ -115,6 +74,16 @@ static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect) {
                                              selector:@selector(controlCenterDidSetRevealPercentage:)
                                                  name:NOTIFICATION_REVEAL_ID
                                                object:nil];
+
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(controlCenterDidBeginScrolling)
+                                                 name:SCROLL_BEGIN_ID
+                                               object:nil];
+
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(controlCenterDidEndScrolling)
+                                                 name:SCROLL_END_ID
+                                               object:nil];
   }
   return self;
 }
@@ -131,6 +100,14 @@ static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect) {
 
 - (void)controlCenterWillBeginTransition {
   self.controlCenterTransitioning = true;
+}
+
+- (void)controlCenterDidBeginScrolling {
+
+}
+
+- (void)controlCenterDidEndScrolling {
+
 }
 
 - (void)controlCenterDidSetRevealPercentage:(NSNotification*)notification {
@@ -461,6 +438,16 @@ BOOL reloadingControlCenter = false;
 
   [imageView release];
   [appPage release];
+}
+
+%new
+- (void)scrollViewWillBeginDragging:(UIScrollView *)scrollView {
+  [[NSNotificationCenter defaultCenter] postNotificationName:SCROLL_BEGIN_ID object:self];
+}
+
+%new
+- (void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate {
+  [[NSNotificationCenter defaultCenter] postNotificationName:SCROLL_END_ID object:self];
 }
 
 - (void)viewDidLoad {
