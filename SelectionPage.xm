@@ -535,11 +535,12 @@ bool firstTimeSearching = true;
   [self.gridViewController.collectionView reloadData];
 }
 
--(void)closeAllPagesButtonTapped {
+- (void)closeAllPagesButtonTapped {
   CCUIControlCenterViewController *ccViewController = (CCUIControlCenterViewController*)self.parentViewController.parentViewController;
   [ccViewController appcenter_removeAllPages];
 }
--(void)closeAllAppsButtonTapped {
+
+- (void)closeAllAppsButtonTapped {
   // TODO change to a slider for hosted app scale (github issue #8)
 }
 
