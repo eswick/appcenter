@@ -36,10 +36,28 @@ static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect) {
 @interface ACAppPageView : UIView
 
 @property (nonatomic, retain) NSString *appIdentifier;
+@property (nonatomic, retain) UIView *touchBlockerView;
+@property (nonatomic, assign) FBSceneHostWrapperView *hostView;
 
 @end
 
 @implementation ACAppPageView
+
+- (id)init {
+  self = [super init];
+  if (self) {
+    self.touchBlockerView = [[UIView alloc] init];
+    self.touchBlockerView.backgroundColor = [UIColor colorWithWhite:0.5 alpha:0.01];
+    [self addSubview:self.touchBlockerView];
+    [self.touchBlockerView release];
+  }
+  return self;
+}
+
+- (void)layoutSubviews {
+  self.touchBlockerView.frame = self.hostView.frame;
+  [self bringSubviewToFront:self.touchBlockerView];
+}
 
 @end
 
@@ -103,11 +121,21 @@ static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect) {
 }
 
 - (void)controlCenterDidBeginScrolling {
+  [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(startSendingTouchesToApp) object:self];
 
+  self.view.touchBlockerView.hidden = false;
 }
 
 - (void)controlCenterDidEndScrolling {
+  [self performSelector:@selector(startSendingTouchesToApp) withObject:self afterDelay:0.5];
+}
 
+- (void)stopSendingTouchesToApp {
+  self.view.touchBlockerView.hidden = false;
+}
+
+- (void)startSendingTouchesToApp {
+  self.view.touchBlockerView.hidden = true;
 }
 
 - (void)controlCenterDidSetRevealPercentage:(NSNotification*)notification {
@@ -149,6 +177,7 @@ static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect) {
 
       self.hostView.alpha = 0.0;
 
+      self.view.hostView = self.hostView;
       [self.view addSubview:self.hostView];
 
       [UIView animateWithDuration:0.25 animations:^{
