@@ -428,8 +428,6 @@
   [self.view addConstraints:constraints];
 }
 
-bool firstTimeSearching = true;
-
 - (void)beginSearching {
   self.searching = true;
 
@@ -445,10 +443,7 @@ bool firstTimeSearching = true;
   MSHookIvar<UIGestureRecognizer*>(ccViewController, "_tapGesture").enabled = false;
   MSHookIvar<UIView*>(ccViewController, "_pagesScrollView").userInteractionEnabled = false;
 
-  if (firstTimeSearching) {
-    [self.view.searchBar becomeFirstResponder];
-  }
-  firstTimeSearching = false;
+  [self.view.searchBar becomeFirstResponder];
 }
 
 - (void)endSearching {
