@@ -1,6 +1,5 @@
 #import "ControlCenterUI.h"
 #import "ControlCenterUIKit.h"
-#import "MenuViewController.h"
 
 @class ACAppIconCell;
 
@@ -39,17 +38,14 @@
 
 @end
 
-@interface ACAppSelectionPageViewController : UIViewController <CCUIControlCenterPageContentProviding, UISearchBarDelegate, ACMenuViewControllerDelegate>
+@interface ACAppSelectionPageViewController : UIViewController <CCUIControlCenterPageContentProviding, UISearchBarDelegate>
 
 @property (nonatomic, retain) ACAppSelectionGridViewController *gridViewController;
-@property (nonatomic, retain) ACMenuViewController *menuViewController;
 @property (nonatomic, retain) ACAppSelectionContainerView *view;
 @property (nonatomic, assign) ACAppIconCell *selectedCell;
 @property (nonatomic, assign) BOOL searching;
 
 - (void)beginSearching;
 - (void)endSearching;
--(void)closeAllPagesButtonTapped;
--(void)closeAllAppsButtonTapped;
 
 @end
