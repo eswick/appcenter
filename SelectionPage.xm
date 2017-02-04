@@ -3,7 +3,6 @@
 #import "Tweak.h"
 #import "UIImage+Tint.h"
 #import "ManualLayout.h"
-#import "MenuViewController.h"
 #import <substrate.h>
 
 @implementation ACSearchButton
@@ -32,6 +31,7 @@
     UIImage *image = [UIImage imageWithContentsOfFile:@"/Library/Application Support/App Center/appcenter.png"];
     [self setGlyphImage:image selectedGlyphImage:image name:@"ACIconButton"];
   }
+  self.userInteractionEnabled = false;
   return self;
 }
 
@@ -384,7 +384,6 @@
   self = [super initWithNibName:nibName bundle:bundle];
   if (self) {
     self.gridViewController = [[ACAppSelectionGridViewController alloc] initWithNibName:nil bundle:nil];
-    self.menuViewController = [[ACMenuViewController alloc] initWithNibName:nil bundle:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(hideMenu) name:@"KeyboardWillShow" object:nil];
   }
   return self;
@@ -411,14 +410,6 @@
   [self.view.searchButton addTarget:self action:@selector(searchPressed:) forControlEvents:UIControlEventTouchUpInside];
   self.view.searchBar.delegate = self;
 
-  [self addChildViewController:self.menuViewController];
-  [self.menuViewController.view setFrame:self.view.bounds];
-  [self.view addSubview:self.menuViewController.view];
-  [self.menuViewController didMoveToParentViewController:self];
-  self.menuViewController.menuDelegate = self;
-  self.menuViewController.view.alpha = 0.0;
-  self.menuViewController.view.hidden = true;
-
   [self addChildViewController:self.gridViewController];
   [self.gridViewController.view setFrame:self.view.bounds];
   [self.view addSubview:self.gridViewController.view];
@@ -428,14 +419,11 @@
 
   NSDictionary *views = @{
     @"gridView": self.gridViewController.view,
-    @"menuView": self.menuViewController.view,
     @"iconButton": self.view.iconButton
   };
 
   [constraints addObjectsFromArray:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[gridView]|" options:nil metrics:nil views:views]];
-  [constraints addObjectsFromArray:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[menuView]|" options:nil metrics:nil views:views]];
   [constraints addObjectsFromArray:[NSLayoutConstraint constraintsWithVisualFormat:@"V:[iconButton]-15-[gridView]|" options:nil metrics:nil views:views]];
-  [constraints addObjectsFromArray:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|-35-[menuView]|" options:nil metrics:nil views:views]];
 
   [self.view addConstraints:constraints];
 }
@@ -447,22 +435,16 @@ bool firstTimeSearching = true;
 
   [self.gridViewController.collectionView reloadData];
 
-  self.menuViewController.view.hidden = false;
   [UIView animateWithDuration:0.25 animations:^{
-    self.menuViewController.view.alpha = 1.0;
-    self.gridViewController.view.alpha = 0.0;
     self.view.searchBar.alpha = 0.9;
     self.view.searchButton.alpha = 0.0;
     self.view.titleLabel.alpha = 0.0;
-  } completion: ^void(BOOL success){
-    self.gridViewController.view.hidden = true;
   }];
 
   CCUIControlCenterViewController *ccViewController = (CCUIControlCenterViewController*)self.parentViewController.parentViewController;
   MSHookIvar<UIGestureRecognizer*>(ccViewController, "_tapGesture").enabled = false;
   MSHookIvar<UIView*>(ccViewController, "_pagesScrollView").userInteractionEnabled = false;
 
-  // TODO fix the darkening view! It needs some kind of update
   if (firstTimeSearching) {
     [self.view.searchBar becomeFirstResponder];
   }
@@ -472,16 +454,10 @@ bool firstTimeSearching = true;
 - (void)endSearching {
   self.searching = false;
 
-  self.gridViewController.view.hidden = false;
   [UIView animateWithDuration:0.25 animations:^{
     self.view.searchBar.alpha = 0.0;
-    self.gridViewController.view.alpha = 1.0;
-    self.menuViewController.view.alpha = 0.0;
     self.view.searchButton.alpha = 1.0;
     self.view.titleLabel.alpha = 1.0;
-  } completion: ^void(BOOL success){
-    self.gridViewController.view.hidden = false;
-    self.menuViewController.view.hidden = true;
   }];
 
   CCUIControlCenterViewController *ccViewController = (CCUIControlCenterViewController*)self.parentViewController.parentViewController;
@@ -498,10 +474,7 @@ bool firstTimeSearching = true;
 - (void)hideMenu {
   self.gridViewController.view.hidden = false;
   [UIView animateWithDuration:0.25 animations:^{
-    self.menuViewController.view.alpha = 0.0;
     self.gridViewController.view.alpha = 1.0;
-  } completion: ^void(BOOL success){
-    self.menuViewController.view.hidden = true;
   }];
 }
 
@@ -533,15 +506,6 @@ bool firstTimeSearching = true;
     [self endSearching];
   }
   [self.gridViewController.collectionView reloadData];
-}
-
-- (void)closeAllPagesButtonTapped {
-  CCUIControlCenterViewController *ccViewController = (CCUIControlCenterViewController*)self.parentViewController.parentViewController;
-  [ccViewController appcenter_removeAllPages];
-}
-
-- (void)closeAllAppsButtonTapped {
-  // TODO change to a slider for hosted app scale (github issue #8)
 }
 
 @end
