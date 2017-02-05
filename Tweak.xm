@@ -74,6 +74,7 @@ static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect) {
 
 - (id)initWithBundleIdentifier:(NSString*)bundleIdentifier;
 - (void)controlCenterDidFinishTransition;
+- (void)startSendingTouchesToApp;
 
 @end
 
@@ -91,6 +92,7 @@ static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect) {
     int iconFormat = [icon iconFormatForLocation:0];
     self.appIconImageView.image = [icon getCachedIconImage:iconFormat];
     [self.view addSubview:self.appIconImageView];
+    self.appIconImageView.alpha = 0.0;
     [self.appIconImageView release];
 
     self.lockedLabel = [[CCUIControlCenterLabel alloc] initWithFrame:CGRectMake(0,0,300,10)];
@@ -163,6 +165,10 @@ static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect) {
   CGFloat percentage = MIN(1.0, [[notification userInfo][@"revealPercentage"] floatValue]);
 
   frame.origin.y = openedY * percentage;
+  self.appIconImageView.alpha = percentage;
+  if ([(SpringBoard*)[%c(SpringBoard) sharedApplication] isLocked]) {
+    self.lockedLabel.alpha = percentage;
+  }
 
   self.hostView.frame = frame;
 }
@@ -181,7 +187,6 @@ static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect) {
       if ([self.app.bundleIdentifier isEqualToString:[[(SpringBoard*)[%c(SpringBoard) sharedApplication] _accessibilityFrontMostApplication] bundleIdentifier]]) {
         return;
       }
-      self.appIconImageView.hidden = false;
 
       self.sceneHostManager = [[self.app mainScene] contextHostManager];
       self.hostView = [self.sceneHostManager hostViewForRequester:REQUESTER enableAndOrderFront:true];
@@ -200,10 +205,11 @@ static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect) {
       [self.view addSubview:self.hostView];
 
       [UIView animateWithDuration:0.25 animations:^{
+        self.appIconImageView.alpha = 1.0;
         if (![(SpringBoard*)[%c(SpringBoard) sharedApplication] isLocked]) {
           self.hostView.alpha = 1.0;
-        } else {
-          self.lockedLabel.alpha = 1.0;
+          [self stopSendingTouchesToApp];
+          [self performSelector:@selector(startSendingTouchesToApp) withObject:self afterDelay:0.6];
         }
       }];
     });
@@ -418,7 +424,9 @@ BOOL reloadingControlCenter = false;
   [self controlCenterWillPresent];
   reloadingControlCenter = false;
 
-  [self scrollToPage:[self.contentViewControllers count] - 1 animated:false withCompletion:nil];
+  [self scrollToPage:[self.contentViewControllers count] - 1 animated:false withCompletion:^(BOOL b){
+    [appPage startSendingTouchesToApp];
+  }];
 
   MSHookIvar<UIViewController*>(self, "_selectedViewController") = [self appcenter_containerViewControllerForContentView:appPage.view];
   [self _updatePageControl];
@@ -466,6 +474,7 @@ BOOL reloadingControlCenter = false;
         [[NSNotificationCenter defaultCenter] postNotificationName:@"ACAppCellStopActivity" object:self];
 
         [[[selectionViewController gridViewController] collectionView] reloadData];
+        appPage.appIconImageView.hidden = false;
       }];
     });
   }];
