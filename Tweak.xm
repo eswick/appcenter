@@ -70,6 +70,7 @@ static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect) {
 @property (nonatomic, assign) BOOL controlCenterTransitioning;
 @property (nonatomic, retain) ACAppPageView *view;
 @property (nonatomic, retain) UIImageView *appIconImageView;
+@property (nonatomic, retain) CCUIControlCenterLabel *lockedLabel;
 
 - (id)initWithBundleIdentifier:(NSString*)bundleIdentifier;
 - (void)controlCenterDidFinishTransition;
@@ -91,6 +92,15 @@ static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect) {
     self.appIconImageView.image = [icon getCachedIconImage:iconFormat];
     [self.view addSubview:self.appIconImageView];
     [self.appIconImageView release];
+
+    self.lockedLabel = [[CCUIControlCenterLabel alloc] initWithFrame:CGRectMake(0,0,300,10)];
+    self.lockedLabel.text = [NSString stringWithFormat:@"Unlock to use %@", self.app.displayName];
+    self.lockedLabel.textAlignment = NSTextAlignmentCenter;
+    self.lockedLabel.font = [UIFont systemFontOfSize:[ACManualLayout appDisplayNameFontSize]];
+    [self.lockedLabel setStyle:(unsigned long long) 2];//white text
+    self.lockedLabel.alpha = 0.0;
+    [self.view addSubview:self.lockedLabel];
+    [self.lockedLabel release];
 
     if (!self.app) {
       return nil;
@@ -171,6 +181,7 @@ static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect) {
       if ([self.app.bundleIdentifier isEqualToString:[[(SpringBoard*)[%c(SpringBoard) sharedApplication] _accessibilityFrontMostApplication] bundleIdentifier]]) {
         return;
       }
+      self.appIconImageView.hidden = false;
 
       self.sceneHostManager = [[self.app mainScene] contextHostManager];
       self.hostView = [self.sceneHostManager hostViewForRequester:REQUESTER enableAndOrderFront:true];
@@ -189,7 +200,11 @@ static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect) {
       [self.view addSubview:self.hostView];
 
       [UIView animateWithDuration:0.25 animations:^{
-        self.hostView.alpha = 1.0;
+        if (![(SpringBoard*)[%c(SpringBoard) sharedApplication] isLocked]) {
+          self.hostView.alpha = 1.0;
+        } else {
+          self.lockedLabel.alpha = 1.0;
+        }
       }];
     });
   }];
@@ -207,7 +222,12 @@ static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect) {
   }
 
   self.hostView.frame = frame;
-  self.appIconImageView.center = CGPointMake(self.view.center.x, 0);
+  if ([(SpringBoard*)[%c(SpringBoard) sharedApplication] isLocked]) {
+    self.appIconImageView.center = CGPointMake(self.view.center.x, [ACManualLayout ccEdgeSpacing]);
+    self.lockedLabel.center = CGPointMake(self.view.center.x, [ACManualLayout ccEdgeSpacing]+16+self.appIconImageView.bounds.size.height/2);
+  } else {
+    self.appIconImageView.center = CGPointMake(self.view.center.x, 0);
+  }
 }
 
 - (void)loadView {

@@ -18,4 +18,6 @@
 
 @interface CCUIControlCenterLabel : UILabel
 
+- (void)setStyle:(unsigned long long)arg1;
+
 @end

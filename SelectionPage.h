@@ -42,6 +42,7 @@
 
 @property (nonatomic, retain) ACAppSelectionGridViewController *gridViewController;
 @property (nonatomic, retain) ACAppSelectionContainerView *view;
+@property (nonatomic, retain) CCUIControlCenterLabel *lockedLabel;
 @property (nonatomic, assign) ACAppIconCell *selectedCell;
 @property (nonatomic, assign) BOOL searching;
 

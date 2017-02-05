@@ -65,6 +65,7 @@
 @interface SpringBoard : UIApplication
 
 - (SBApplication*)_accessibilityFrontMostApplication;
+- (_Bool)isLocked;
 
 @end
 

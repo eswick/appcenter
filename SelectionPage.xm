@@ -418,11 +418,19 @@
 
   NSDictionary *views = @{
     @"gridView": self.gridViewController.view,
-    @"iconButton": self.view.iconButton
+    @"iconButton": self.view.iconButton,
   };
 
   [constraints addObjectsFromArray:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[gridView]|" options:nil metrics:nil views:views]];
   [constraints addObjectsFromArray:[NSLayoutConstraint constraintsWithVisualFormat:@"V:[iconButton]-15-[gridView]|" options:nil metrics:nil views:views]];
+
+  self.lockedLabel = [[CCUIControlCenterLabel alloc] initWithFrame:CGRectMake(0,0,200,10)];
+  self.lockedLabel.translatesAutoresizingMaskIntoConstraints = false;
+  self.lockedLabel.text = @"Unlock to use App Center";
+  self.lockedLabel.textAlignment = NSTextAlignmentCenter;
+  self.lockedLabel.font = [UIFont systemFontOfSize:[ACManualLayout appDisplayNameFontSize]*3/2];
+  [self.lockedLabel setStyle:(unsigned long long) 0];//dark translucent text
+  [self.lockedLabel release];
 
   [self.view addConstraints:constraints];
 }
@@ -465,13 +473,6 @@
   [self beginSearching];
 }
 
-- (void)hideMenu {
-  self.gridViewController.view.hidden = false;
-  [UIView animateWithDuration:0.25 animations:^{
-    self.gridViewController.view.alpha = 1.0;
-  }];
-}
-
 - (void)searchBarCancelButtonClicked:(UISearchBar *)searchBar {
    [self endSearching];
    [self.gridViewController.collectionView reloadData];
@@ -484,6 +485,13 @@
 - (void)controlCenterWillPresent {
   if (!reloadingControlCenter) {
     [self.gridViewController.collectionView reloadData];
+    if ([(SpringBoard*)[%c(SpringBoard) sharedApplication] isLocked]) {
+      self.gridViewController.view.hidden = true;
+      self.view.searchButton.hidden = true;
+      [self.view addSubview:self.lockedLabel];
+      [self.view addConstraint:[NSLayoutConstraint constraintWithItem:self.gridViewController.view attribute:NSLayoutAttributeCenterY relatedBy:NSLayoutRelationEqual toItem:self.lockedLabel attribute:NSLayoutAttributeCenterY multiplier:1.0 constant:0]];
+      [self.view addConstraint:[NSLayoutConstraint constraintWithItem:self.gridViewController.view attribute:NSLayoutAttributeCenterX relatedBy:NSLayoutRelationEqual toItem:self.lockedLabel attribute:NSLayoutAttributeCenterX multiplier:1.0 constant:0]];
+    }
   }
 }
 
@@ -499,7 +507,10 @@
   if (self.searching) {
     [self endSearching];
   }
+  self.gridViewController.view.hidden = false;
+  self.view.searchButton.hidden = false;
   [self.gridViewController.collectionView reloadData];
+  [self.lockedLabel removeFromSuperview];
 }
 
 @end
