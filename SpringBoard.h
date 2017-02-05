@@ -62,6 +62,12 @@
 
 @end
 
+@interface UIApplication ()
+
+- (bool)launchApplicationWithIdentifier:(NSString*)arg1 suspended:(bool)arg2;
+
+@end
+
 @interface SpringBoard : UIApplication
 
 - (SBApplication*)_accessibilityFrontMostApplication;

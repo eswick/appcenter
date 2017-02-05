@@ -49,6 +49,11 @@
     CGFloat cornerRadius = [ACManualLayout appCellCornerRadius];
     self.contentView.layer.cornerRadius = cornerRadius;
 
+    self.longPressRec = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(handleLongPress)];
+    self.longPressRec.minimumPressDuration = 0.75;
+    [self.contentView addGestureRecognizer:self.longPressRec];
+    [self.longPressRec release];
+
     self.button = [CCUIControlCenterButton roundRectButton];
     self.button.delegate = self;
     self.button.userInteractionEnabled = false;
@@ -111,6 +116,10 @@
 - (void)hideActivity {
   [self.loadingView stopAnimating];
   self.imageView.highlighted = false;
+}
+
+- (void)handleLongPress {
+  [[UIApplication sharedApplication] launchApplicationWithIdentifier:self.appIdentifier suspended:NO];
 }
 
 - (void)prepareForReuse {

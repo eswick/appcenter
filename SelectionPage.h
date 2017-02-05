@@ -17,11 +17,13 @@
 @property (nonatomic, retain) UIImageView *imageView;
 @property (nonatomic, retain) UILabel *titleLabel;
 @property (nonatomic, retain) CCUIControlCenterButton *button;
+@property (nonatomic, retain) UILongPressGestureRecognizer *longPressRec;
 @property (nonatomic, retain) UIActivityIndicatorView *loadingView;
 
 - (void)configureForApplication:(NSString*)appIdentifier;
 - (void)showActivity;
 - (void)hideActivity;
+- (void)handleLongPress;
 
 @end
 
