@@ -95,7 +95,7 @@ static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect) {
     self.appIconImageView.alpha = 0.0;
     [self.appIconImageView release];
 
-    self.lockedLabel = [[CCUIControlCenterLabel alloc] initWithFrame:CGRectMake(0,0,300,10)];
+    self.lockedLabel = [[CCUIControlCenterLabel alloc] initWithFrame:CGRectMake(0,0,300,15)];
     self.lockedLabel.text = [NSString stringWithFormat:@"Unlock to use %@", self.app.displayName];
     self.lockedLabel.textAlignment = NSTextAlignmentCenter;
     self.lockedLabel.font = [UIFont systemFontOfSize:[ACManualLayout appDisplayNameFontSize]];
