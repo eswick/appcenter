@@ -384,7 +384,6 @@
   self = [super initWithNibName:nibName bundle:bundle];
   if (self) {
     self.gridViewController = [[ACAppSelectionGridViewController alloc] initWithNibName:nil bundle:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(hideMenu) name:@"KeyboardWillShow" object:nil];
   }
   return self;
 }

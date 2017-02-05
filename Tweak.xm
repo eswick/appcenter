@@ -69,6 +69,7 @@ static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect) {
 @property (nonatomic, retain) FBSceneHostWrapperView *hostView;
 @property (nonatomic, assign) BOOL controlCenterTransitioning;
 @property (nonatomic, retain) ACAppPageView *view;
+@property (nonatomic, retain) UIImageView *appIconImageView;
 
 - (id)initWithBundleIdentifier:(NSString*)bundleIdentifier;
 - (void)controlCenterDidFinishTransition;
@@ -83,6 +84,13 @@ static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect) {
   self = [super init];
   if (self) {
     self.app = [[%c(SBApplicationController) sharedInstance] applicationWithBundleIdentifier:bundleIdentifier];
+    self.appIconImageView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, [%c(SBIconView) defaultIconImageSize].width, [%c(SBIconView) defaultIconImageSize].height)];
+    SBIconModel *iconModel = [(SBIconController*)[%c(SBIconController) sharedInstance] model];
+    SBIcon *icon = [iconModel expectedIconForDisplayIdentifier:bundleIdentifier];
+    int iconFormat = [icon iconFormatForLocation:0];
+    self.appIconImageView.image = [icon getCachedIconImage:iconFormat];
+    [self.view addSubview:self.appIconImageView];
+    [self.appIconImageView release];
 
     if (!self.app) {
       return nil;
@@ -199,6 +207,7 @@ static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect) {
   }
 
   self.hostView.frame = frame;
+  self.appIconImageView.center = CGPointMake(self.view.center.x, 0);
 }
 
 - (void)loadView {
@@ -330,30 +339,6 @@ BOOL reloadingControlCenter = false;
   [selectionViewController release];
 }
 
-// TODO fix page not disappearing until cc is manually reopened
-%new
-- (void)appcenter_removeAllPages {
-  if ([appPages count] > 0) {
-    for (UIViewController *contentViewController in [self contentViewControllers]) {
-      if ([contentViewController isKindOfClass:[ACAppPageViewController class]]) {
-        NSString *bundleIdentifier = [[(ACAppPageViewController*)contentViewController app] bundleIdentifier];
-        ACAppPageViewController *appPageViewController = (ACAppPageViewController*)contentViewController;
-        if (![bundleIdentifier isEqualToString:[[(SpringBoard*)[%c(SpringBoard) sharedApplication] _accessibilityFrontMostApplication] bundleIdentifier]]) {
-          [[appPageViewController app] appcenter_stopBackgroundingWithCompletion:nil];
-        }
-        [appPageViewController.sceneHostManager disableHostingForRequester:REQUESTER];
-
-        [self _removeContentViewController:contentViewController];
-        [appPages removeObject:bundleIdentifier];
-      }
-    }
-    [self appcenter_savePages];
-    reloadingControlCenter = true;
-    [self controlCenterWillPresent];
-    reloadingControlCenter = false;
-  }
-}
-
 %new
 - (void)appcenter_appSelected:(NSString*)bundleIdentifier {
 
@@ -403,6 +388,7 @@ BOOL reloadingControlCenter = false;
   [self.view addSubview:imageView];
 
   ACAppPageViewController *appPage = [[ACAppPageViewController alloc] initWithBundleIdentifier:bundleIdentifier];
+  appPage.appIconImageView.hidden = true;
 
   [self _removeContentViewController:selectionViewController];
   [self _addContentViewController:appPage];
@@ -519,8 +505,7 @@ BOOL reloadingControlCenter = false;
 %new
 - (void)keyboardWillHide:(NSNotification*)notification {
   UIViewController *containerVC = [self appcenter_containerViewControllerForContentView:selectionViewController.view];
-
-  if (selectionViewController.searching) {
+  if (containerVC.view.frame.origin.y != 0) {
     [UIView animateWithDuration:0.5 animations:^{
       CGRect frame = containerVC.view.frame;
       frame.origin.y = 0;
