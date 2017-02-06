@@ -522,4 +522,19 @@
   [self.lockedLabel removeFromSuperview];
 }
 
+- (void)reloadForUnlock {
+  dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+    [self controlCenterWillPresent];
+    self.gridViewController.view.alpha = 0.0;
+    self.gridViewController.view.hidden = false;
+    self.view.searchButton.alpha = 0.0;
+    self.view.searchButton.hidden = false;
+    [UIView animateWithDuration:0.5 delay:0.0 options:UIViewAnimationOptionTransitionCrossDissolve animations:^{
+      self.gridViewController.view.alpha = 1.0;
+      self.view.searchButton.alpha = 1.0;
+      self.lockedLabel.alpha = 0.0;
+    } completion:nil];
+  });
+}
+
 @end

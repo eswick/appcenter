@@ -77,6 +77,8 @@
 - (void)appcenter_removeAllPages;
 - (void)appcenter_savePages;
 - (CCUIControlCenterPageContainerViewController*)appcenter_containerViewControllerForContentView:(UIView*)contentView;
+- (void)appcenter_registerForDetectingLockState;
+- (void)appcenter_reloadForUnlock;
 
 @end
 

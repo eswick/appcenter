@@ -1,5 +1,6 @@
 #pragma mark Includes & Defines
 
+#import <notify.h>
 #import <substrate.h>
 #import "ControlCenterUI.h"
 #import "SpringBoard.h"
@@ -76,6 +77,7 @@ static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect) {
 - (id)initWithBundleIdentifier:(NSString*)bundleIdentifier;
 - (void)controlCenterDidFinishTransition;
 - (void)startSendingTouchesToApp;
+- (void)reloadForUnlock;
 
 @end
 
@@ -87,6 +89,10 @@ static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect) {
   self = [super init];
   if (self) {
     self.app = [[%c(SBApplicationController) sharedInstance] applicationWithBundleIdentifier:bundleIdentifier];
+    if (!self.app) {
+      return nil;
+    }
+
     self.appIconImageView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, [%c(SBIconView) defaultIconImageSize].width, [%c(SBIconView) defaultIconImageSize].height)];
     SBIconModel *iconModel = [(SBIconController*)[%c(SBIconController) sharedInstance] model];
     SBIcon *icon = [iconModel expectedIconForDisplayIdentifier:bundleIdentifier];
@@ -111,10 +117,6 @@ static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect) {
     [self.view addSubview:self.appLoadingIndicator];
     [self.appLoadingIndicator release];
 
-    if (!self.app) {
-      return nil;
-    }
-
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(controlCenterDidSetRevealPercentage:)
                                                  name:NOTIFICATION_REVEAL_ID
@@ -137,6 +139,13 @@ static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect) {
   [[NSNotificationCenter defaultCenter] removeObserver:self];
 
   [super dealloc];
+}
+
+- (void)reloadForUnlock {
+  dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+    [self controlCenterWillPresent];
+    [self viewWillLayoutSubviews];
+  });
 }
 
 - (void)controlCenterDidFinishTransition {
@@ -378,6 +387,32 @@ BOOL reloadingControlCenter = false;
   selectionViewController = [[ACAppSelectionPageViewController alloc] initWithNibName:nil bundle:nil];
   [self _addContentViewController:selectionViewController];
   [selectionViewController release];
+
+  [self appcenter_registerForDetectingLockState];
+}
+
+%new
+- (void)appcenter_registerForDetectingLockState {
+  int notify_token;
+  notify_register_dispatch("com.apple.springboard.lockstate", &notify_token,dispatch_get_main_queue(), ^(int token) {
+    uint64_t state = UINT64_MAX;
+    notify_get_state(token, &state);
+    if (state == 0) { // unlocked
+      [self appcenter_reloadForUnlock];
+    }
+  });
+}
+
+%new
+- (void)appcenter_reloadForUnlock {
+  if (selectionViewController) {
+    [selectionViewController reloadForUnlock];
+  }
+  for (UIViewController *contentViewController in [self contentViewControllers]) {
+    if ([contentViewController isKindOfClass:[ACAppPageViewController class]]) {
+      [(ACAppPageViewController*) contentViewController reloadForUnlock];
+    }
+  }
 }
 
 %new

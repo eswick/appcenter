@@ -50,5 +50,6 @@
 
 - (void)beginSearching;
 - (void)endSearching;
+- (void)reloadForUnlock;
 
 @end
