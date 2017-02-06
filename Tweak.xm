@@ -71,6 +71,7 @@ static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect) {
 @property (nonatomic, retain) ACAppPageView *view;
 @property (nonatomic, retain) UIImageView *appIconImageView;
 @property (nonatomic, retain) CCUIControlCenterLabel *lockedLabel;
+@property (nonatomic, retain) UIActivityIndicatorView *appLoadingIndicator;
 
 - (id)initWithBundleIdentifier:(NSString*)bundleIdentifier;
 - (void)controlCenterDidFinishTransition;
@@ -103,6 +104,12 @@ static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect) {
     self.lockedLabel.alpha = 0.0;
     [self.view addSubview:self.lockedLabel];
     [self.lockedLabel release];
+
+    self.appLoadingIndicator = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhite];
+    self.appLoadingIndicator.hidesWhenStopped = false;
+    self.appLoadingIndicator.alpha = 0.0;
+    [self.view addSubview:self.appLoadingIndicator];
+    [self.appLoadingIndicator release];
 
     if (!self.app) {
       return nil;
@@ -234,6 +241,7 @@ static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect) {
   } else {
     self.appIconImageView.center = CGPointMake(self.view.center.x, 0);
   }
+  self.appLoadingIndicator.center = CGPointMake(self.appIconImageView.center.x, self.appIconImageView.center.y + self.appIconImageView.bounds.size.height);
 }
 
 - (void)loadView {
@@ -243,8 +251,15 @@ static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect) {
   [pageView release];
 }
 
-- (void)viewWillAppear:(BOOL)arg1 {
-  [super viewWillAppear:arg1];
+- (void)viewDidAppear:(BOOL)arg1 {
+  [super viewDidAppear:arg1];
+  if (![(SpringBoard*)[%c(SpringBoard) sharedApplication] isLocked]) {
+    [self.appLoadingIndicator startAnimating];
+    self.appLoadingIndicator.alpha = 0.0;
+    [UIView animateWithDuration:0.5 delay:0.5 options:UIViewAnimationOptionCurveEaseIn animations:^{
+      self.appLoadingIndicator.alpha = 1.0;
+    } completion:^(BOOL finished){}];
+  }
 }
 
 @end
