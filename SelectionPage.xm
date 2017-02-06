@@ -498,6 +498,7 @@
       self.gridViewController.view.hidden = true;
       self.view.searchButton.hidden = true;
       [self.view addSubview:self.lockedLabel];
+      self.lockedLabel.alpha = 1.0;
       [self.view addConstraint:[NSLayoutConstraint constraintWithItem:self.gridViewController.view attribute:NSLayoutAttributeCenterY relatedBy:NSLayoutRelationEqual toItem:self.lockedLabel attribute:NSLayoutAttributeCenterY multiplier:1.0 constant:0]];
       [self.view addConstraint:[NSLayoutConstraint constraintWithItem:self.gridViewController.view attribute:NSLayoutAttributeCenterX relatedBy:NSLayoutRelationEqual toItem:self.lockedLabel attribute:NSLayoutAttributeCenterX multiplier:1.0 constant:0]];
     }
