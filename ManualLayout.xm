@@ -54,6 +54,9 @@
 +(CGFloat)ccEdgeSpacing {
   return [ACManualLayout isTinyScreen] ? 8.5 * [ACManualLayout relativeTo47InchScale] : [ACManualLayout isSmallScreen] ? 8 : 9 ;
 }
++(CGFloat)defaultAppPageScale {
+  return (1.0 - [ACManualLayout ccEdgeSpacing]/[ACManualLayout screenSize].width)*0.909;
+}
 
 // Helpers
 + (CGSize)screenSize {

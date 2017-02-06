@@ -211,8 +211,7 @@ static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect) {
       self.hostView.layer.masksToBounds = true;
       self.hostView.backgroundColor = [UIColor blackColor];
 
-      CGFloat scale = self.view.bounds.size.width / [[UIScreen mainScreen] bounds].size.width;
-      scale = scale * SCALE_MULTIPLIER;
+      CGFloat scale = [ACManualLayout defaultAppPageScale];
       self.hostView.transform = CGAffineTransformMakeScale(scale, scale);
 
       self.hostView.alpha = 0.0;
@@ -506,10 +505,7 @@ BOOL reloadingControlCenter = false;
         imageView.center = CGPointMake([[UIScreen mainScreen] bounds].size.width / 2, [[UIScreen mainScreen] bounds].size.height / 2);
         imageView.alpha = 0;
 
-        UIView *platterView = [MSHookIvar<NSArray<UIViewController*>*>(self, "_allPageContainerViewControllers")[0] view];
-
-        CGFloat scale = platterView.bounds.size.width / [[UIScreen mainScreen] bounds].size.width;
-        scale = scale * SCALE_MULTIPLIER;
+        CGFloat scale = [ACManualLayout defaultAppPageScale];
         CGRect toRect = CGRectApplyAffineTransform([[UIScreen mainScreen] bounds], CGAffineTransformMakeScale(scale, scale));
         toRect.origin = CGPointMake(CGRectGetMidX([[UIScreen mainScreen] bounds]) - (toRect.size.width / 2), CGRectGetMidY([[UIScreen mainScreen] bounds]) - (toRect.size.height / 2) - APP_PAGE_PADDING);
 

@@ -14,5 +14,6 @@
 +(CGFloat)appDisplayNameFontSize;
 
 +(CGFloat)ccEdgeSpacing;
++(CGFloat)defaultAppPageScale;
 
 @end
