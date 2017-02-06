@@ -18,7 +18,7 @@
 #define SCROLL_BEGIN_ID @"com.eswick.appcenter.notification.scrollbegin"
 #define SCROLL_END_ID @"com.eswick.appcenter.notification.scrollend"
 #define APP_PAGE_PADDING 5.0
-#define SCALE_MULTIPLIER 0.925
+#define SCALE_MULTIPLIER 1.0
 #define PREFS_PATH [[@"~/Library" stringByExpandingTildeInPath] stringByAppendingPathComponent:@"/Preferences/com.eswick.appcenter.plist"]
 
 #pragma mark Helpers
@@ -211,7 +211,7 @@ static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect) {
       self.hostView.layer.masksToBounds = true;
       self.hostView.backgroundColor = [UIColor blackColor];
 
-      CGFloat scale = [ACManualLayout defaultAppPageScale];
+      CGFloat scale = [ACManualLayout defaultAppPageScale]*SCALE_MULTIPLIER;
       self.hostView.transform = CGAffineTransformMakeScale(scale, scale);
 
       self.hostView.alpha = 0.0;
@@ -505,7 +505,7 @@ BOOL reloadingControlCenter = false;
         imageView.center = CGPointMake([[UIScreen mainScreen] bounds].size.width / 2, [[UIScreen mainScreen] bounds].size.height / 2);
         imageView.alpha = 0;
 
-        CGFloat scale = [ACManualLayout defaultAppPageScale];
+        CGFloat scale = [ACManualLayout defaultAppPageScale]*SCALE_MULTIPLIER;
         CGRect toRect = CGRectApplyAffineTransform([[UIScreen mainScreen] bounds], CGAffineTransformMakeScale(scale, scale));
         toRect.origin = CGPointMake(CGRectGetMidX([[UIScreen mainScreen] bounds]) - (toRect.size.width / 2), CGRectGetMidY([[UIScreen mainScreen] bounds]) - (toRect.size.height / 2) - APP_PAGE_PADDING);
 
