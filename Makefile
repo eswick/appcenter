@@ -21,7 +21,7 @@ endif
 
 include $(THEOS_MAKE_PATH)/tweak.mk
 
-SUBPROJECTS += appcenter
+SUBPROJECTS += appcenterprefs
 include $(THEOS_MAKE_PATH)/aggregate.mk
 
 after-AppCenter-all::
