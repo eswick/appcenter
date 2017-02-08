@@ -21,6 +21,9 @@ endif
 
 include $(THEOS_MAKE_PATH)/tweak.mk
 
+SUBPROJECTS += appcenter
+include $(THEOS_MAKE_PATH)/aggregate.mk
+
 after-AppCenter-all::
 	ldid -S $(THEOS_OBJ_DIR)/$(THEOS_CURRENT_INSTANCE)$(TARGET_LIB_EXT)
 

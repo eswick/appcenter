@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>items</key>
+	<array>
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>hasIcon</key>
+			<true/>
+			<key>icon</key>
+			<string>AppCenter_large.png</string>
+			<key>height</key>
+			<real>300</real>
+			<key>alignment</key>
+			<integer>1</integer>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>default</key>
+			<true/>
+			<key>defaults</key>
+			<string>com.eswick.appcenter</string>
+			<key>key</key>
+			<string>IsTweakEnabled</string>
+			<key>label</key>
+			<string>Enabled</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>App Page Size (default is 1.0)</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSliderCell</string>
+			<key>defaults</key>
+			<string>com.eswick.appcenter</string>
+			<key>key</key>
+			<string>AppPageSize</string>
+			<key>default</key>
+			<string>1.0</string>
+			<key>isContinuous</key>
+			<true/>
+			<key>showValue</key>
+			<true/>
+			<key>min</key>
+			<string>0.9</string>
+			<key>max</key>
+			<string>1.05</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>alignment</key>
+			<integer>1</integer>
+			<key>footerAlignment</key>
+			<integer>1</integer>
+			<key>label</key>
+			<string>App Center © 2017 Evan Swick and Christoph Parstorfer</string>
+			<key>footerText</key>
+			<string>INSERT LICENSE INFO</string>
+		</dict>
+	</array>
+	<key>title</key>
+	<string>App Center</string>
+</dict>
+</plist>
