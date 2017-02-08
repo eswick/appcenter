@@ -8,6 +8,8 @@
 - (NSString*)displayName;
 - (BOOL)hasHiddenTag;
 - (BOOL)isActivating;
+- (UIInterfaceOrientation)statusBarOrientation;
+- (UIInterfaceOrientation)currentInterfaceOrientation;
 
 @end
 

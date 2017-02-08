@@ -23,10 +23,40 @@
 
 #pragma mark Helpers
 
-static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect) {
+static CGFloat DegreesToRadians(CGFloat degrees) {
+  return degrees * M_PI / 180;
+};
+
+static int rotationDegreesForInterfaceOrientation(UIInterfaceOrientation orientation) {
+  int rotationDegrees;
+
+  switch(orientation) {
+    case UIInterfaceOrientationPortrait:
+      rotationDegrees = 0;
+      break;
+    case UIInterfaceOrientationPortraitUpsideDown:
+      rotationDegrees = 180;
+      break;
+    case UIInterfaceOrientationLandscapeLeft:
+      rotationDegrees = 90;
+      break;
+    case UIInterfaceOrientationLandscapeRight:
+      rotationDegrees = 270;
+      break;
+  }
+
+  return rotationDegrees;
+}
+
+static CGFloat rotationRadiansForInterfaceOrientation(UIInterfaceOrientation orientation) {
+  return DegreesToRadians(rotationDegreesForInterfaceOrientation(orientation));
+}
+
+static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect, CGFloat viewRotation) {
     CGAffineTransform transform = CGAffineTransformIdentity;
     transform = CGAffineTransformTranslate(transform, -(CGRectGetMidX(sourceRect)-CGRectGetMidX(finalRect)), -(CGRectGetMidY(sourceRect)-CGRectGetMidY(finalRect)));
     transform = CGAffineTransformScale(transform, finalRect.size.width/sourceRect.size.width, finalRect.size.height/sourceRect.size.height);
+    transform = CGAffineTransformRotate(transform, viewRotation);
 
     return transform;
 }
@@ -229,6 +259,7 @@ static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect) {
 
       CGFloat scale = [ACManualLayout defaultAppPageScale]*SCALE_MULTIPLIER;
       self.hostView.transform = CGAffineTransformMakeScale(scale, scale);
+      self.hostView.transform = CGAffineTransformRotate(self.hostView.transform, rotationRadiansForInterfaceOrientation([self.app statusBarOrientation]));
 
       self.hostView.alpha = 0.0;
 
@@ -529,7 +560,7 @@ BOOL reloadingControlCenter = false;
       imageView.hidden = false;
 
       self.animationWrapperView.layer.cornerRadius = 10;
-      self.animationWrapperView.transform = transformToRect(self.animationWrapperView.bounds, imageView.frame);
+      self.animationWrapperView.transform = transformToRect(self.animationWrapperView.bounds, imageView.frame, rotationRadiansForInterfaceOrientation(application.statusBarOrientation));
       self.animationWrapperView.alpha = 0;
       self.animationWrapperView.clipsToBounds = true;
       [self.view addSubview:self.animationWrapperView];
@@ -549,7 +580,7 @@ BOOL reloadingControlCenter = false;
         CGRect toRect = CGRectApplyAffineTransform([[UIScreen mainScreen] bounds], CGAffineTransformMakeScale(scale, scale));
         toRect.origin = CGPointMake(CGRectGetMidX([[UIScreen mainScreen] bounds]) - (toRect.size.width / 2), CGRectGetMidY([[UIScreen mainScreen] bounds]) - (toRect.size.height / 2) - APP_PAGE_PADDING);
 
-        self.animationWrapperView.transform = transformToRect(self.animationWrapperView.bounds, toRect);
+        self.animationWrapperView.transform = transformToRect(self.animationWrapperView.bounds, toRect, rotationRadiansForInterfaceOrientation(application.statusBarOrientation));
         self.animationWrapperView.alpha = 1;
 
       } completion:^(BOOL completed) {
