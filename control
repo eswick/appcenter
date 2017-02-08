@@ -1,9 +1,9 @@
 Package: com.eswick.appcenter
 Name: App Center
 Depends: mobilesubstrate
-Version: 0.0.1
+Version: 0.8.0
 Architecture: iphoneos-arm
-Description: An awesome MobileSubstrate tweak!
-Maintainer: Evan Swick
-Author: Evan Swick
+Description: Allows you to add apps as pages in Control Center
+Maintainer: Evan Swick <eswick@eswick.com>
+Author: CONATH, Evan Swick <eswick@eswick.com>
 Section: Tweaks
