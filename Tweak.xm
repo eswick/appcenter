@@ -31,7 +31,6 @@ static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect) {
     return transform;
 }
 
-
 #pragma mark Implementations
 
 @interface ACAppPageView : UIView
@@ -71,7 +70,7 @@ static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect) {
 @property (nonatomic, assign) BOOL controlCenterTransitioning;
 @property (nonatomic, retain) ACAppPageView *view;
 @property (nonatomic, retain) UIImageView *appIconImageView;
-@property (nonatomic, retain) CCUIControlCenterLabel *lockedLabel;
+@property (nonatomic, retain) CCUIControlCenterLabel *infoLabel;
 @property (nonatomic, retain) UIActivityIndicatorView *appLoadingIndicator;
 
 - (id)initWithBundleIdentifier:(NSString*)bundleIdentifier;
@@ -102,14 +101,17 @@ static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect) {
     self.appIconImageView.alpha = 0.0;
     [self.appIconImageView release];
 
-    self.lockedLabel = [[CCUIControlCenterLabel alloc] initWithFrame:CGRectMake(0,0,300,15)];
-    self.lockedLabel.text = [NSString stringWithFormat:@"Unlock to use %@", self.app.displayName];
-    self.lockedLabel.textAlignment = NSTextAlignmentCenter;
-    self.lockedLabel.font = [UIFont systemFontOfSize:[ACManualLayout appDisplayNameFontSize]];
-    [self.lockedLabel setStyle:(unsigned long long) 2];//white text
-    self.lockedLabel.alpha = 0.0;
-    [self.view addSubview:self.lockedLabel];
-    [self.lockedLabel release];
+    self.infoLabel = [[CCUIControlCenterLabel alloc] initWithFrame:CGRectMake(0,0,300, 20)];
+    [self setInfoLabelText];
+    self.infoLabel.numberOfLines = 2;
+    self.infoLabel.lineBreakMode = NSLineBreakByWordWrapping;
+    self.infoLabel.textAlignment = NSTextAlignmentCenter;
+    self.infoLabel.font = [UIFont systemFontOfSize:[ACManualLayout appDisplayNameFontSize]];
+    [self.infoLabel setStyle:(unsigned long long) 2];//white text
+    self.infoLabel.alpha = 0.0;
+    self.infoLabel.hidden = true;
+    [self.view addSubview:self.infoLabel];
+    [self.infoLabel release];
 
     self.appLoadingIndicator = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhite];
     self.appLoadingIndicator.hidesWhenStopped = false;
@@ -141,11 +143,31 @@ static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect) {
   [super dealloc];
 }
 
+- (BOOL)isDeviceUnlocked {
+  return ![(SpringBoard*)[%c(SpringBoard) sharedApplication] isLocked];
+}
+
+- (void)setInfoLabelText {
+  self.infoLabel.text = [self isDeviceUnlocked] ?
+    [NSString stringWithFormat:@"%@ is running in the foreground", self.app.displayName] :
+    [NSString stringWithFormat:@"Unlock to use %@", self.app.displayName];
+}
+
 - (void)reloadForUnlock {
   dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
     [self controlCenterWillPresent];
+    [self viewDidAppear:false];
     [self viewWillLayoutSubviews];
+    [self controlCenterDidEndScrolling];
   });
+}
+
+- (void)stopSendingTouchesToApp {
+  self.view.touchBlockerView.hidden = false;
+}
+
+- (void)startSendingTouchesToApp {
+  self.view.touchBlockerView.hidden = true;
 }
 
 - (void)controlCenterDidFinishTransition {
@@ -158,20 +180,13 @@ static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect) {
 
 - (void)controlCenterDidBeginScrolling {
   [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(startSendingTouchesToApp) object:self];
-
-  self.view.touchBlockerView.hidden = false;
+  [self stopSendingTouchesToApp];
 }
 
 - (void)controlCenterDidEndScrolling {
-  [self performSelector:@selector(startSendingTouchesToApp) withObject:self afterDelay:0.5];
-}
-
-- (void)stopSendingTouchesToApp {
-  self.view.touchBlockerView.hidden = false;
-}
-
-- (void)startSendingTouchesToApp {
-  self.view.touchBlockerView.hidden = true;
+  if ([self isDeviceUnlocked]) {
+    [self performSelector:@selector(startSendingTouchesToApp) withObject:self afterDelay:0.5];
+  }
 }
 
 - (void)controlCenterDidSetRevealPercentage:(NSNotification*)notification {
@@ -181,15 +196,16 @@ static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect) {
   CGFloat percentage = MIN(1.0, [[notification userInfo][@"revealPercentage"] floatValue]);
 
   frame.origin.y = openedY * percentage;
-  self.appIconImageView.alpha = percentage;
-  if ([(SpringBoard*)[%c(SpringBoard) sharedApplication] isLocked]) {
-    self.lockedLabel.alpha = percentage;
-  }
-
   self.hostView.frame = frame;
+
+  self.appIconImageView.alpha = percentage;
+  self.infoLabel.alpha = percentage;
 }
 
 - (void)controlCenterDidDismiss {
+  self.appLoadingIndicator.hidden = false;
+  self.infoLabel.hidden = true;
+  self.infoLabel.alpha = 0.0;
   [self.sceneHostManager disableHostingForRequester:REQUESTER];
 
   if (![self.app.bundleIdentifier isEqualToString:[[(SpringBoard*)[%c(SpringBoard) sharedApplication] _accessibilityFrontMostApplication] bundleIdentifier]]) {
@@ -221,7 +237,7 @@ static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect) {
 
       [UIView animateWithDuration:0.25 animations:^{
         self.appIconImageView.alpha = 1.0;
-        if (![(SpringBoard*)[%c(SpringBoard) sharedApplication] isLocked]) {
+        if ([self isDeviceUnlocked]) {
           self.hostView.alpha = 1.0;
           [self stopSendingTouchesToApp];
           [self performSelector:@selector(startSendingTouchesToApp) withObject:self afterDelay:0.6];
@@ -243,12 +259,8 @@ static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect) {
   }
 
   self.hostView.frame = frame;
-  if ([(SpringBoard*)[%c(SpringBoard) sharedApplication] isLocked]) {
-    self.appIconImageView.center = CGPointMake(self.view.center.x, [ACManualLayout ccEdgeSpacing]);
-    self.lockedLabel.center = CGPointMake(self.view.center.x, [ACManualLayout ccEdgeSpacing]+16+self.appIconImageView.bounds.size.height/2);
-  } else {
-    self.appIconImageView.center = CGPointMake(self.view.center.x, 0);
-  }
+  self.infoLabel.center = CGPointMake(self.view.center.x, [ACManualLayout ccEdgeSpacing]+16+self.appIconImageView.bounds.size.height/2);
+  self.appIconImageView.center = CGPointMake(self.view.center.x, [ACManualLayout ccEdgeSpacing]);
   self.appLoadingIndicator.center = CGPointMake(self.appIconImageView.center.x, self.appIconImageView.center.y + self.appIconImageView.bounds.size.height);
 }
 
@@ -261,12 +273,34 @@ static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect) {
 
 - (void)viewDidAppear:(BOOL)arg1 {
   [super viewDidAppear:arg1];
-  if (![(SpringBoard*)[%c(SpringBoard) sharedApplication] isLocked]) {
-    [self.appLoadingIndicator startAnimating];
-    self.appLoadingIndicator.alpha = 0.0;
-    [UIView animateWithDuration:0.5 delay:0.5 options:UIViewAnimationOptionCurveEaseIn animations:^{
-      self.appLoadingIndicator.alpha = 1.0;
-    } completion:^(BOOL finished){}];
+  if ([self isDeviceUnlocked]) {
+    if ([self.app.bundleIdentifier isEqualToString:[[(SpringBoard*)[%c(SpringBoard) sharedApplication] _accessibilityFrontMostApplication] bundleIdentifier]]) {
+      [UIView animateWithDuration:0.25 delay:0 options:UIViewAnimationOptionCurveEaseIn animations:^{
+        self.infoLabel.alpha = 0.0;
+        self.appLoadingIndicator.alpha = 0.0;
+      } completion:^(BOOL finished){
+        self.appLoadingIndicator.hidden = true;
+        self.infoLabel.hidden = false;
+        [self setInfoLabelText];
+        [UIView animateWithDuration:0.5 delay:0.5 options:UIViewAnimationOptionCurveEaseIn animations:^{
+          self.infoLabel.alpha = 1.0;
+        } completion:^(BOOL finished){}];
+      }];
+    } else {
+      [self.appLoadingIndicator startAnimating];
+      self.appLoadingIndicator.alpha = 0.0;
+      self.appLoadingIndicator.hidden = false;
+      [UIView animateWithDuration:0.5 delay:0.5 options:UIViewAnimationOptionCurveEaseIn animations:^{
+        self.appLoadingIndicator.alpha = 1.0;
+        self.infoLabel.alpha = 0.0;
+      } completion:^(BOOL finished){
+        self.infoLabel.hidden = true;
+      }];
+    }
+  } else {
+    [self setInfoLabelText];
+    self.infoLabel.hidden = false;
+    self.appLoadingIndicator.hidden = true;
   }
 }
 
@@ -301,6 +335,9 @@ static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect) {
 
     [[%c(FBSSystemService) sharedService] openApplication:[self bundleIdentifier] options:@{ FBSOpenApplicationOptionKeyActivateSuspended : @true } withResult:^{
       [self appcenter_setBackgrounded:false withCompletion:completion];
+      SBAppSwitcherModel *model = [%c(SBAppSwitcherModel) sharedInstance];
+      SBApplication *application = [[%c(SBApplicationController) sharedInstance] applicationWithBundleIdentifier:[self bundleIdentifier]];
+      [model addToFront:[model _displayItemForApplication:application] role:2];
     }];
 
     return;
@@ -427,6 +464,8 @@ BOOL reloadingControlCenter = false;
 
           if (![bundleIdentifier isEqualToString:[[(SpringBoard*)[%c(SpringBoard) sharedApplication] _accessibilityFrontMostApplication] bundleIdentifier]]) {
             [[appPageViewController app] appcenter_stopBackgroundingWithCompletion:nil];
+          } else {
+            [[[selectionViewController gridViewController] collectionView] reloadData];
           }
 
           [appPageViewController.sceneHostManager disableHostingForRequester:REQUESTER];
@@ -464,6 +503,7 @@ BOOL reloadingControlCenter = false;
 
   ACAppPageViewController *appPage = [[ACAppPageViewController alloc] initWithBundleIdentifier:bundleIdentifier];
   appPage.appIconImageView.hidden = true;
+  appPage.appLoadingIndicator.hidden = true;
 
   [self _removeContentViewController:selectionViewController];
   [self _addContentViewController:appPage];
@@ -643,12 +683,6 @@ BOOL reloadingControlCenter = false;
 
 - (void)layoutSubviews {
   if ([self.contentView isKindOfClass:[ACAppPageView class]]) {
-    if ([[(ACAppPageView*)self.contentView appIdentifier] isEqualToString:[[(SpringBoard*)[%c(SpringBoard) sharedApplication] _accessibilityFrontMostApplication] bundleIdentifier]]) {
-      MSHookIvar<UIView*>(self, "_baseMaterialView").hidden = false;
-      MSHookIvar<UIView*>(self, "_whiteLayerView").hidden = false;
-      %orig;
-      return;
-    }
     MSHookIvar<UIView*>(self, "_baseMaterialView").hidden = true;
     MSHookIvar<UIView*>(self, "_whiteLayerView").hidden = true;
   } else {

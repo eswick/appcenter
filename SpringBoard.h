@@ -31,6 +31,8 @@
 + (id)sharedInstance;
 - (NSArray<SBDisplayItem*>*)mainSwitcherDisplayItems;
 - (id)_displayItemForApplication:(id)arg1;
+-(void)addToFront:(id)arg1 role:(long long)arg2; // arg1 is a SBDisplayItem
+-(void)remove:(id)arg1; // arg1 is a SBDisplayItem
 
 @end
 
