@@ -1,4 +1,6 @@
 "App Center" = "Appli Centre";
 "Enabled" = "Activée";
 "App Page Size (default is 1.0)" = "Dimension des fenêtres (normalement 1.0)";
+"Hint: open Settings in App Center to see the changes live!" = "Rémarque: ouvriez l'appli Réglages dans Appli Centre pour voyer le changement en direct.";
 "App Center © 2017 Evan Swick and Christoph Parstorfer" = "Appli Centre © 2017 Evan Swick et Christoph Parstorfer";
+"INSERT LICENSE INFO" = "";

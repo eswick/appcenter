@@ -6,15 +6,9 @@
 	<array>
 		<dict>
 			<key>cell</key>
-			<string>PSButtonCell</string>
-			<key>hasIcon</key>
-			<true/>
-			<key>icon</key>
-			<string>AppCenter_large.png</string>
-			<key>height</key>
-			<real>300</real>
-			<key>alignment</key>
-			<integer>1</integer>
+			<string>PSGroupCell</string>
+			<key>headerCellClass</key>
+			<string>APCHeaderCell</string>
 		</dict>
 		<dict>
 			<key>cell</key>
@@ -27,6 +21,8 @@
 			<string>IsTweakEnabled</string>
 			<key>label</key>
 			<string>Enabled</string>
+			<key>PostNotification</key>
+			<string>com.eswick.appcenter.notification.prefschange</string>
 		</dict>
 		<dict>
 			<key>cell</key>
@@ -40,7 +36,7 @@
 			<key>defaults</key>
 			<string>com.eswick.appcenter</string>
 			<key>key</key>
-			<string>AppPageSize</string>
+			<string>AppPageScaleMultiplier</string>
 			<key>default</key>
 			<string>1.0</string>
 			<key>isContinuous</key>
@@ -51,6 +47,14 @@
 			<string>0.9</string>
 			<key>max</key>
 			<string>1.05</string>
+			<key>PostNotification</key>
+			<string>com.eswick.appcenter.notification.prefschange</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>Hint: open Settings in App Center to see the changes live!</string>
 		</dict>
 		<dict>
 			<key>cell</key>

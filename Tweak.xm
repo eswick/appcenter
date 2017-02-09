@@ -13,15 +13,31 @@
 #pragma mark Constants
 
 #define REQUESTER @"com.eswick.appcenter"
+#define BUNDLEID_C "com.eswick.appcenter"
 #define ANIMATION_REQUESTER @"com.eswick.appcenter.animation"
 #define NOTIFICATION_REVEAL_ID @"com.eswick.appcenter.notification.revealpercentage"
 #define SCROLL_BEGIN_ID @"com.eswick.appcenter.notification.scrollbegin"
 #define SCROLL_END_ID @"com.eswick.appcenter.notification.scrollend"
+#define PREFS_CHANGE_ID "com.eswick.appcenter.notification.prefschange"
 #define APP_PAGE_PADDING 5.0
-#define SCALE_MULTIPLIER 1.0
 #define PREFS_PATH [[@"~/Library" stringByExpandingTildeInPath] stringByAppendingPathComponent:@"/Preferences/com.eswick.appcenter.plist"]
+#define PREFS_ENABLED_C "IsTweakEnabled"
+#define PREFS_APPPAGESCALE_C "AppPageScaleMultiplier"
 
 #pragma mark Helpers
+
+static void LoadPrefs() {
+  CFPreferencesAppSynchronize(CFSTR(BUNDLEID_C));
+  CFBooleanRef enabled = (CFBooleanRef)CFPreferencesCopyAppValue(CFSTR(PREFS_ENABLED_C), CFSTR(BUNDLEID_C));
+  if (enabled) {
+    isTweakEnabled = CFBooleanGetValue(enabled);
+  }
+  CFNumberRef aPSM = (CFNumberRef)CFPreferencesCopyAppValue(CFSTR(PREFS_APPPAGESCALE_C), CFSTR(BUNDLEID_C));
+  if (aPSM) {
+    appPageScaleMultiplier = [(NSNumber*)aPSM doubleValue];
+  }
+  [[NSNotificationCenter defaultCenter] postNotificationName:@PREFS_CHANGE_ID object:nil];
+}
 
 static CGFloat DegreesToRadians(CGFloat degrees) {
   return degrees * M_PI / 180;
@@ -163,6 +179,11 @@ static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect, CG
                                              selector:@selector(controlCenterDidEndScrolling)
                                                  name:SCROLL_END_ID
                                                object:nil];
+
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                            selector:@selector(reloadForPrefsChange)
+                                                name:@PREFS_CHANGE_ID
+                                              object:nil];
   }
   return self;
 }
@@ -171,6 +192,20 @@ static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect, CG
   [[NSNotificationCenter defaultCenter] removeObserver:self];
 
   [super dealloc];
+}
+
+- (void)reloadForPrefsChange {
+  if (self) {
+    if (self.app) {
+      if (self.hostView) {
+        [UIView animateWithDuration:0.25 delay:0 options:UIViewAnimationCurveEaseInOut animations:^{
+          CGFloat scale = [ACManualLayout defaultAppPageScale]*appPageScaleMultiplier;
+          self.hostView.transform = CGAffineTransformMakeScale(scale, scale);
+          self.hostView.transform = CGAffineTransformRotate(self.hostView.transform, rotationRadiansForInterfaceOrientation([self.app statusBarOrientation]));
+        } completion:^(BOOL success) {}];
+      }
+    }
+  }
 }
 
 - (BOOL)isDeviceUnlocked {
@@ -228,8 +263,10 @@ static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect, CG
   frame.origin.y = openedY * percentage;
   self.hostView.frame = frame;
 
-  self.appIconImageView.alpha = percentage;
-  self.infoLabel.alpha = percentage;
+  [UIView animateWithDuration:0.1 animations:^{
+    self.appIconImageView.alpha = percentage > 0.7 ? percentage : 0.0;
+    self.infoLabel.alpha = percentage > 0.7 ? percentage : 0.0;;
+  }];
 }
 
 - (void)controlCenterDidDismiss {
@@ -257,7 +294,7 @@ static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect, CG
       self.hostView.layer.masksToBounds = true;
       self.hostView.backgroundColor = [UIColor blackColor];
 
-      CGFloat scale = [ACManualLayout defaultAppPageScale]*SCALE_MULTIPLIER;
+      CGFloat scale = [ACManualLayout defaultAppPageScale]*appPageScaleMultiplier;
       self.hostView.transform = CGAffineTransformMakeScale(scale, scale);
       self.hostView.transform = CGAffineTransformRotate(self.hostView.transform, rotationRadiansForInterfaceOrientation([self.app statusBarOrientation]));
 
@@ -388,6 +425,8 @@ NSMutableArray<NSString*> *appPages = nil;
 NSMutableDictionary<NSString*, SBAppSwitcherSnapshotView*> *snapshotViewCache = nil;
 static BOOL filterPlatterViews = false;
 BOOL reloadingControlCenter = false;
+BOOL isTweakEnabled = true;
+CGFloat appPageScaleMultiplier = 1.0;
 
 %hook CCUIControlCenterViewController
 
@@ -436,7 +475,23 @@ BOOL reloadingControlCenter = false;
 }
 
 - (void)_loadPages {
+  LoadPrefs();
+  if (!isTweakEnabled) {
+    %orig;
+    return;
+  }
+
   %orig;
+
+  CFNotificationCenterAddObserver(
+    CFNotificationCenterGetDarwinNotifyCenter(),
+    NULL,
+    (CFNotificationCallback)LoadPrefs,
+    CFSTR(PREFS_CHANGE_ID),
+    NULL,
+    CFNotificationSuspensionBehaviorCoalesce
+  );
+
   snapshotViewCache = [NSMutableDictionary new];
   appPages = [NSMutableArray new];
 
@@ -576,7 +631,7 @@ BOOL reloadingControlCenter = false;
         imageView.center = CGPointMake([[UIScreen mainScreen] bounds].size.width / 2, [[UIScreen mainScreen] bounds].size.height / 2);
         imageView.alpha = 0;
 
-        CGFloat scale = [ACManualLayout defaultAppPageScale]*SCALE_MULTIPLIER;
+        CGFloat scale = [ACManualLayout defaultAppPageScale]*appPageScaleMultiplier;
         CGRect toRect = CGRectApplyAffineTransform([[UIScreen mainScreen] bounds], CGAffineTransformMakeScale(scale, scale));
         toRect.origin = CGPointMake(CGRectGetMidX([[UIScreen mainScreen] bounds]) - (toRect.size.width / 2), CGRectGetMidY([[UIScreen mainScreen] bounds]) - (toRect.size.height / 2) - APP_PAGE_PADDING);
 
