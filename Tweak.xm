@@ -530,9 +530,11 @@ CGFloat appPageScaleMultiplier = 1.0;
   if (selectionViewController) {
     [selectionViewController reloadForUnlock];
   }
-  for (UIViewController *contentViewController in [self contentViewControllers]) {
-    if ([contentViewController isKindOfClass:[ACAppPageViewController class]]) {
-      [(ACAppPageViewController*) contentViewController reloadForUnlock];
+  if ([self isPresented]) {
+    for (UIViewController *contentViewController in [self contentViewControllers]) {
+      if ([contentViewController isKindOfClass:[ACAppPageViewController class]]) {
+        [(ACAppPageViewController*) contentViewController reloadForUnlock];
+      }
     }
   }
 }

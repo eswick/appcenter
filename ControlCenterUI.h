@@ -14,6 +14,7 @@
 - (id)sortedVisibleViewControllers;
 - (void)_addOrRemovePagesBasedOnVisibility;
 - (void)scrollToPage:(unsigned long long)arg1 animated:(BOOL)arg2 withCompletion:(void(^)(BOOL))completion;
+- (BOOL)isPresented;
 
 @end
 
