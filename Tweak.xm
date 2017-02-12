@@ -118,6 +118,7 @@ static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect, CG
 @property (nonatomic, retain) UIImageView *appIconImageView;
 @property (nonatomic, retain) CCUIControlCenterLabel *infoLabel;
 @property (nonatomic, retain) UIActivityIndicatorView *appLoadingIndicator;
+@property (nonatomic, assign) BOOL isBeingCreated;
 
 - (id)initWithBundleIdentifier:(NSString*)bundleIdentifier;
 - (void)controlCenterDidFinishTransition;
@@ -227,6 +228,10 @@ static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect, CG
   });
 }
 
+- (void)setIsPageAnimating:(BOOL)value {
+  self.isBeingCreated = value;
+}
+
 - (void)stopSendingTouchesToApp {
   self.view.touchBlockerView.hidden = false;
 }
@@ -265,6 +270,7 @@ static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect, CG
 
   [UIView animateWithDuration:0.1 animations:^{
     self.appIconImageView.alpha = percentage > 0.7 ? percentage : 0.0;
+    self.appLoadingIndicator.alpha = percentage > 0.7 ? percentage : 0.0;
     self.infoLabel.alpha = percentage > 0.7 ? percentage : 0.0;;
   }];
 }
@@ -355,15 +361,15 @@ static CGAffineTransform transformToRect(CGRect sourceRect, CGRect finalRect, CG
         } completion:^(BOOL finished){}];
       }];
     } else {
+      self.infoLabel.alpha = 0.0;
+      self.infoLabel.hidden = true;
       [self.appLoadingIndicator startAnimating];
       self.appLoadingIndicator.alpha = 0.0;
-      self.appLoadingIndicator.hidden = false;
+      self.appLoadingIndicator.hidden = self.isBeingCreated;
+      self.appIconImageView.hidden = self.isBeingCreated;
       [UIView animateWithDuration:0.5 delay:0.5 options:UIViewAnimationOptionCurveEaseIn animations:^{
         self.appLoadingIndicator.alpha = 1.0;
-        self.infoLabel.alpha = 0.0;
-      } completion:^(BOOL finished){
-        self.infoLabel.hidden = true;
-      }];
+      } completion:nil];
     }
   } else {
     [self setInfoLabelText];
@@ -590,8 +596,7 @@ CGFloat appPageScaleMultiplier = 1.0;
   [self.view addSubview:imageView];
 
   ACAppPageViewController *appPage = [[ACAppPageViewController alloc] initWithBundleIdentifier:bundleIdentifier];
-  appPage.appIconImageView.hidden = true;
-  appPage.appLoadingIndicator.hidden = true;
+  [appPage setIsPageAnimating:true];
 
   [self _removeContentViewController:selectionViewController];
   [self _addContentViewController:appPage];
@@ -648,7 +653,7 @@ CGFloat appPageScaleMultiplier = 1.0;
         [[NSNotificationCenter defaultCenter] postNotificationName:@"ACAppCellStopActivity" object:self];
 
         [[[selectionViewController gridViewController] collectionView] reloadData];
-        appPage.appIconImageView.hidden = false;
+        [appPage setIsPageAnimating:false];
       }];
     });
   }];
