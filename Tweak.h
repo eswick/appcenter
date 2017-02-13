@@ -6,3 +6,4 @@ extern BOOL reloadingControlCenter;
 // Preferences
 extern BOOL isTweakEnabled;
 extern CGFloat appPageScaleMultiplier;
+extern BOOL isNotFirstRun;

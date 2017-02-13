@@ -19,10 +19,13 @@
 #define SCROLL_BEGIN_ID @"com.eswick.appcenter.notification.scrollbegin"
 #define SCROLL_END_ID @"com.eswick.appcenter.notification.scrollend"
 #define PREFS_CHANGE_ID "com.eswick.appcenter.notification.prefschange"
+#define NOTIFICATION_SCROLL_TO_SELECTIONPAGE @"com.eswick.appcenter.notification.scrolltoselectionpage"
 #define APP_PAGE_PADDING 5.0
 #define PREFS_PATH [[@"~/Library" stringByExpandingTildeInPath] stringByAppendingPathComponent:@"/Preferences/com.eswick.appcenter.plist"]
 #define PREFS_ENABLED_C "IsTweakEnabled"
 #define PREFS_APPPAGESCALE_C "AppPageScaleMultiplier"
+#define PREFS_ISFIRSTRUN_C "IsFirstRun"
+#define PREFS_APPPAGES_C "AppPages"
 
 #pragma mark Helpers
 
@@ -35,6 +38,12 @@ static void LoadPrefs() {
   CFNumberRef aPSM = (CFNumberRef)CFPreferencesCopyAppValue(CFSTR(PREFS_APPPAGESCALE_C), CFSTR(BUNDLEID_C));
   if (aPSM) {
     appPageScaleMultiplier = [(NSNumber*)aPSM doubleValue];
+  }
+  CFBooleanRef iFR = (CFBooleanRef)CFPreferencesCopyAppValue(CFSTR(PREFS_ISFIRSTRUN_C), CFSTR(BUNDLEID_C));
+  if (iFR) {
+    isNotFirstRun = !CFBooleanGetValue(iFR);
+  } else {
+    isNotFirstRun = false;
   }
   [[NSNotificationCenter defaultCenter] postNotificationName:@PREFS_CHANGE_ID object:nil];
 }
@@ -433,6 +442,25 @@ static BOOL filterPlatterViews = false;
 BOOL reloadingControlCenter = false;
 BOOL isTweakEnabled = true;
 CGFloat appPageScaleMultiplier = 1.0;
+BOOL isNotFirstRun = false;
+
+%hook CCUIFirstUsePanelViewController
+
+- (void)viewDidLoad {
+  %orig;
+  MSHookIvar<UILabel*>(self, "_titleLabel").text = @"App Center";
+  NSString *text = @"iPhone controls, Now Playing, and App Center each have their own cards.";
+  MSHookIvar<UILabel*>(self, "_explanitoryText").text = text;
+  //[MSHookIvar<UIButton*>(self, "_continueButton") setTitle:@"Open App Center" forState:UIControlStateNormal];
+  MSHookIvar<UIImageView*>(self, "_lastPageGlyphImageView").transform = CGAffineTransformMakeScale(-1, 1);
+}
+
+- (void)_tappedContinueButton:(id)arg1 {
+  [[NSNotificationCenter defaultCenter] postNotificationName:NOTIFICATION_SCROLL_TO_SELECTIONPAGE object:self];
+  %orig;
+}
+
+%end
 
 %hook CCUIControlCenterViewController
 
@@ -464,20 +492,19 @@ CGFloat appPageScaleMultiplier = 1.0;
 }
 
 %new
+- (void)appcenter_displayFirstRunAlert {
+  [[CCUIControlCenterDefaults standardDefaults] setHasAcknowledgedFirstUseAlert:false];
+}
+
+%new
+- (void)appcenter_scrollToSelectionPage {
+  [self scrollToPage:[self.contentViewControllers count] - 1 animated:true withCompletion:^(BOOL b){}];
+}
+
+%new
 - (void)appcenter_savePages {
-  NSMutableDictionary *dictionary = [NSMutableDictionary dictionaryWithContentsOfFile:PREFS_PATH];
-
-  if (!dictionary) {
-    dictionary = [NSMutableDictionary new];
-  } else {
-    [dictionary retain];
-  }
-
-  dictionary[@"appPages"] = [NSArray arrayWithArray:appPages];
-
-  [dictionary writeToFile:PREFS_PATH atomically:true];
-
-  [dictionary release];
+  CFPreferencesSetAppValue(CFSTR(PREFS_APPPAGES_C), appPages, CFSTR(BUNDLEID_C));
+  CFPreferencesAppSynchronize(CFSTR(BUNDLEID_C));
 }
 
 - (void)_loadPages {
@@ -485,6 +512,11 @@ CGFloat appPageScaleMultiplier = 1.0;
   if (!isTweakEnabled) {
     %orig;
     return;
+  }
+  if (!isNotFirstRun) {
+    [self appcenter_displayFirstRunAlert];
+    CFPreferencesSetAppValue(CFSTR(PREFS_ISFIRSTRUN_C), kCFBooleanFalse, CFSTR(BUNDLEID_C));
+    CFPreferencesAppSynchronize(CFSTR(BUNDLEID_C));
   }
 
   %orig;
@@ -501,11 +533,10 @@ CGFloat appPageScaleMultiplier = 1.0;
   snapshotViewCache = [NSMutableDictionary new];
   appPages = [NSMutableArray new];
 
-  NSMutableDictionary *dictionary = [NSMutableDictionary dictionaryWithContentsOfFile:PREFS_PATH];
+  NSArray *savedPages = (NSArray*)CFPreferencesCopyAppValue(CFSTR(PREFS_APPPAGES_C), CFSTR(BUNDLEID_C));
 
-
-  if (dictionary) {
-    for (NSString *bundleID in dictionary[@"appPages"]) {
+  if (savedPages) {
+    for (NSString *bundleID in savedPages) {
       [appPages addObject:bundleID];
       ACAppPageViewController *appPage = [[ACAppPageViewController alloc] initWithBundleIdentifier:bundleID];
       [self _addContentViewController:appPage];
@@ -685,6 +716,10 @@ CGFloat appPageScaleMultiplier = 1.0;
                                            selector:@selector(keyboardWillHide:)
                                                name:UIKeyboardWillHideNotification
                                              object:nil];
+  [[NSNotificationCenter defaultCenter] addObserver:self
+                                          selector:@selector(appcenter_scrollToSelectionPage)
+                                              name:NOTIFICATION_SCROLL_TO_SELECTIONPAGE
+                                            object:nil];
 }
 
 - (void)viewWillLayoutSubviews {

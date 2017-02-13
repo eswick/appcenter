@@ -15,6 +15,7 @@
 - (void)_addOrRemovePagesBasedOnVisibility;
 - (void)scrollToPage:(unsigned long long)arg1 animated:(BOOL)arg2 withCompletion:(void(^)(BOOL))completion;
 - (BOOL)isPresented;
+- (void)appcenter_displayFirstRunAlert;
 
 @end
 
@@ -99,5 +100,22 @@
 @interface CCUIControlCenterContainerView : UIView
 
 @property (nonatomic, assign) id <CCUIControlCenterContainerViewDelegate> delegate;
+
+@end
+
+@interface BSAbstractDefaultDomain
+@end
+
+@interface CCUIControlCenterDefaults : BSAbstractDefaultDomain
+
++ (id)standardDefaults;
+- (void)setHasAcknowledgedFirstUseAlert:(BOOL)arg1;
+
+@end
+
+@interface CCUIFirstUsePanelViewController: UIViewController <CCUIControlCenterObserver>
+
+- (void)viewDidLoad;
+- (void)_tappedContinueButton:(id)arg1;
 
 @end
