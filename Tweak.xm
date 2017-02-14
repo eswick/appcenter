@@ -632,12 +632,13 @@ BOOL isNotFirstRun = false;
   [self _removeContentViewController:selectionViewController];
   [self _addContentViewController:appPage];
   [self _addContentViewController:selectionViewController];
+  [self _addOrRemovePagesBasedOnVisibility];
 
   reloadingControlCenter = true;
   [self controlCenterWillPresent];
   reloadingControlCenter = false;
 
-  [self scrollToPage:[self.contentViewControllers count] - 1 animated:false withCompletion:^(BOOL b){
+  [self scrollToPage:[self.contentViewControllers count] - 1 animated:false withCompletion:^(BOOL b) {
     [appPage startSendingTouchesToApp];
   }];
 
@@ -646,6 +647,22 @@ BOOL isNotFirstRun = false;
 
   [application appcenter_startBackgroundingWithCompletion:^(BOOL success) {
     dispatch_async(dispatch_get_main_queue(), ^{
+
+      // darkening view fix
+      CCUIBackgroundDarkeningWithPlatterCutoutView *darkeningView = [[%c(CCUIBackgroundDarkeningWithPlatterCutoutView) alloc] initWithFrame:[[UIScreen mainScreen] bounds] darkeningColor:[UIColor colorWithWhite:0 alpha:0.6] platterCornerRadius:10];
+
+      UIView *platterView = [(UIView*)[[self pagePlatterViewsForContainerView:MSHookIvar<id>(self, "_containerView")] lastObject] superview];
+
+      CGRect frame = darkeningView.frame;
+      frame.origin.x = ([self.contentViewControllers count] - 1) * MSHookIvar<UIScrollView*>(self, "_pagesScrollView").frame.size.width;
+      frame.origin.y = -platterView.superview.frame.origin.y;
+
+      darkeningView.frame = frame;
+
+      [MSHookIvar<UIView*>(self, "_pagesScrollView") addSubview:darkeningView];
+      [MSHookIvar<UIView*>(self, "_pagesScrollView") sendSubviewToBack:darkeningView];
+
+      [darkeningView release];
 
       FBSceneHostManager *sceneHostManager = [[application mainScene] contextHostManager];
       self.animationWrapperView = [sceneHostManager hostViewForRequester:ANIMATION_REQUESTER enableAndOrderFront:true];
@@ -680,6 +697,8 @@ BOOL isNotFirstRun = false;
         [[self.animationWrapperView.scene contextHostManager] disableHostingForRequester:ANIMATION_REQUESTER];
         [[self.animationWrapperView.scene contextHostManager] enableHostingForRequester:REQUESTER orderFront:true];
         [self.animationWrapperView removeFromSuperview];
+
+        [darkeningView removeFromSuperview];
 
         [[NSNotificationCenter defaultCenter] postNotificationName:@"ACAppCellStopActivity" object:self];
 

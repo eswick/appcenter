@@ -81,6 +81,7 @@
 - (CCUIControlCenterPageContainerViewController*)appcenter_containerViewControllerForContentView:(UIView*)contentView;
 - (void)appcenter_registerForDetectingLockState;
 - (void)appcenter_reloadForUnlock;
+- (id)pagePlatterViewsForContainerView:(id)arg1;
 
 @end
 
@@ -100,6 +101,17 @@
 @interface CCUIControlCenterContainerView : UIView
 
 @property (nonatomic, assign) id <CCUIControlCenterContainerViewDelegate> delegate;
+
+- (void)_updateMasks;
+- (void)_resetControlCenterToOffscreenState;
+
+@end
+
+@interface CCUIBackgroundDarkeningWithPlatterCutoutView : UIView
+
+@property(nonatomic) struct CGRect cutOutRect;
+
+- (id)initWithFrame:(CGRect)arg1 darkeningColor:(id)arg2 platterCornerRadius:(CGFloat)arg3;
 
 @end
 
