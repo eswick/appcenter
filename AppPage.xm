@@ -219,9 +219,7 @@
 
   frame.origin.x = CGRectGetMidX(self.view.bounds) - (self.hostView.frame.size.width / 2);
 
-  if (self.controlCenterTransitioning) {
-    frame.origin.y = 0;
-  } else {
+  if (!self.controlCenterTransitioning) {
     frame.origin.y = [self.view convertPoint:CGPointMake(0, CGRectGetMidY([[UIScreen mainScreen] bounds])) fromView:[UIApplication sharedApplication].keyWindow].y - (frame.size.height / 2) - APP_PAGE_PADDING;
   }
 
