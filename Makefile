@@ -1,10 +1,10 @@
 
 ifdef SIMULATOR
 TARGET = simulator:clang
-ARCHS = x86_64 i386
+ARCHS = x86_64
 else
 TARGET = iphone:latest
-ARCHS = armv7 arm64
+ARCHS = arm64
 endif
 
 include $(THEOS)/makefiles/common.mk
