@@ -441,6 +441,9 @@ BOOL isNotFirstRun = false;
       CGFloat maxMove = -[self.view convertPoint:[containerVC.view convertPoint:containerVC.view.frame.origin toView:nil] fromView:nil].y;
       frame.origin.y = [ACManualLayout ccEdgeSpacing] + MAX(-keyboardSize.height, maxMove);
       containerVC.view.frame = frame;
+    } completion:^(BOOL success) {
+      CCUIControlCenterContainerView *containerView = MSHookIvar<CCUIControlCenterContainerView*>(self, "_containerView");
+      [containerView _updateMasks];
     }];
   }
 }
@@ -453,6 +456,9 @@ BOOL isNotFirstRun = false;
       CGRect frame = containerVC.view.frame;
       frame.origin.y = 0;
       containerVC.view.frame = frame;
+
+      CCUIControlCenterContainerView *containerView = MSHookIvar<CCUIControlCenterContainerView*>(self, "_containerView");
+      [containerView _updateMasks];
     }];
   }
 }
