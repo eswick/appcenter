@@ -550,21 +550,26 @@ BOOL isNotFirstRun = false;
 
 %hook SBAppSwitcherModel
 
-%property (nonatomic, retain) NSMutableArray *recentAppIdentifiers;
+%new
+- (NSArray*)recentAppIdentifiers {
+  NSArray<SBDisplayItem*> *mainSwitcherDisplayItems = MSHookIvar<NSArray*>(self, "_recentDisplayItems");
+  NSMutableArray *recentAppIdentifiers = [NSMutableArray new];
 
-- (id)initWithUserDefaults:(id)arg1 andIconController:(id)arg2 andApplicationController:(id)arg3 {
-  self = %orig;
-  if (self) {
-    self.recentAppIdentifiers = [NSMutableArray new];
-    NSMutableArray* recentDisplayItems = MSHookIvar<NSMutableArray*>(self, "_recentDisplayItems");
-
-    for (SBDisplayItem *item in recentDisplayItems) {
-      [self.recentAppIdentifiers addObject:item.displayIdentifier];
+  for (int i = 0; i < [mainSwitcherDisplayItems count]; i++) {
+    if ([recentAppIdentifiers count] > 9) {
+      break;
     }
 
-    [self.recentAppIdentifiers release];
+    SBDisplayItem *item = mainSwitcherDisplayItems[i];
+
+    if ([[[%c(SBApplicationController) sharedInstance] applicationWithBundleIdentifier:[item displayIdentifier]] hasHiddenTag]) {
+      continue;
+    }
+
+    [recentAppIdentifiers addObject:[item displayIdentifier]];
   }
-  return self;
+
+  return [recentAppIdentifiers autorelease];
 }
 
 - (void)_applicationActivationStateDidChange:(SBApplication*)arg1 withLockScreenViewController:(id)arg2 andLayoutElement:(id)arg3 {

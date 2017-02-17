@@ -81,7 +81,7 @@
 
 @interface SBAppSwitcherModel (AppCenter)
 
-@property (nonatomic, retain) NSMutableArray *recentAppIdentifiers;
+@property (nonatomic, readonly) NSMutableArray *recentAppIdentifiers;
 
 - (NSArray<NSString*>*)appcenter_model;
 
