@@ -1,7 +1,7 @@
 Package: com.eswick.appcenter
 Name: App Center
 Depends: mobilesubstrate
-Version: 0.8.0
+Version: 1.0.0
 Architecture: iphoneos-arm
 Description: Allows you to add apps as pages in Control Center
 Maintainer: Evan Swick <eswick@eswick.com>
