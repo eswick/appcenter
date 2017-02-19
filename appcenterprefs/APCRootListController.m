@@ -11,6 +11,22 @@
 	return _specifiers;
 }
 
+- (void)follow_eswick:(id)arg1{
+    if([[UIApplication sharedApplication] canOpenURL:[NSURL URLWithString:@"twitter://"]]){
+        [[UIApplication sharedApplication] openURL:[NSURL URLWithString:@"twitter://user?screen_name=e_swick"] options:@{} completionHandler:nil];
+    }else{
+        [[UIApplication sharedApplication] openURL:[NSURL URLWithString:@"https://www.twitter.com/e_swick"] options:@{} completionHandler:nil];
+    }
+}
+
+- (void)follow_conath:(id)arg1{
+    if([[UIApplication sharedApplication] canOpenURL:[NSURL URLWithString:@"twitter://"]]){
+        [[UIApplication sharedApplication] openURL:[NSURL URLWithString:@"twitter://user?screen_name=_conath"] options:@{} completionHandler:nil];
+    }else{
+        [[UIApplication sharedApplication] openURL:[NSURL URLWithString:@"https://www.twitter.com/_conath"] options:@{} completionHandler:nil];
+    }
+}
+
 @end
 
 @implementation APCHeaderCell

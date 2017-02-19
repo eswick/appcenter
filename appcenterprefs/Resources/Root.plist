@@ -53,8 +53,28 @@
 		<dict>
 			<key>cell</key>
 			<string>PSGroupCell</string>
-			<key>label</key>
+			<key>footerText</key>
 			<string>Hint: open Settings in App Center to see the changes live!</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>action</key>
+			<string>follow_eswick:</string>
+			<key>icon</key>
+			<string>twitter.png</string>
+			<key>label</key>
+			<string>@e_swick on Twitter</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>action</key>
+			<string>follow_conath:</string>
+			<key>icon</key>
+			<string>twitter.png</string>
+			<key>label</key>
+			<string>@_conath on Twitter</string>
 		</dict>
 		<dict>
 			<key>cell</key>
