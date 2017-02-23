@@ -19,8 +19,10 @@ By downloading, cloning or forking this repository or any of its forks, you agre
 1. Download & set up Xcode, theos and its dependencies.  
 2. Clone this repo.  
 3. Read the license information included in License.md.  
-4. Open Terminal in the appcenter directory and run "make package" to obtain a ready-to-install-.deb or, if building for the iOS Simulator, run "SIMULATOR=1 make".  
-5. Happy hacking!  
+4. Open Terminal in the appcenter directory and run "make package" to obtain a ready-to-install Debian package!
+5. Happy hacking!
+
+Note: Set `SIMULATOR=1` in your environment to compile for the iPhone simulator. You can then use the resulting dynamic library in the iOS Simulator using Karen Tsai's [simject](https://github.com/angelXwind) tool.
 
 **This project was created by Evan Swick and Christoph Parstorfer in 2017. All intellectual property rights to the App Center name and accompanying artwork / design belong to Evan Swick and Christoph Parstorfer.**
 
