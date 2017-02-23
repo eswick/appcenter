@@ -1,7 +1,7 @@
 # App Center
 > Instantly access your favorite apps from Control Center
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/8vZkC27VMG4" frameborder="0" allowfullscreen></iframe>
+[Video](https://www.youtube.com/embed/8vZkC27VMG4)
 
 We’ve all been there.  Chatting with a friend while trying to keep up with the social media timeline, that casual game or the latest news headlines. More often than not, you find yourself repeating the same sequence of click, tap, tap, clicka-click, tap in order to switch between two or more apps. What if this could be reduced to just one swipe?  
 **Introducing App Center.**
