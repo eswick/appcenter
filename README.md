@@ -1,6 +1,8 @@
 # App Center
 > Instantly access your favorite apps from Control Center
 
+<iframe width="560" height="315" src="https://www.youtube.com/embed/8vZkC27VMG4" frameborder="0" allowfullscreen></iframe>
+
 We’ve all been there.  Chatting with a friend while trying to keep up with the social media timeline, that casual game or the latest news headlines. More often than not, you find yourself repeating the same sequence of click, tap, tap, clicka-click, tap in order to switch between two or more apps. What if this could be reduced to just one swipe?  
 **Introducing App Center.**
 
@@ -23,6 +25,8 @@ By downloading, cloning or forking this repository or any of its forks, you agre
 5. Happy hacking!
 
 Note: Set `SIMULATOR=1` in your environment to compile for the iPhone simulator. You can then use the resulting dynamic library in the iOS Simulator using Karen Tsai's [simject](https://github.com/angelXwind) tool.
+
+App Center is now [available in Cydia](http://cydia.saurik.com/package/com.eswick.appcenter/)!
 
 **This project was created by Evan Swick and Christoph Parstorfer in 2017. All intellectual property rights to the App Center name and accompanying artwork / design belong to Evan Swick and Christoph Parstorfer.**
 
