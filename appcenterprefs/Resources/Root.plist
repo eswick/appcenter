@@ -29,6 +29,8 @@
 			<string>PSGroupCell</string>
 			<key>label</key>
 			<string>App Page Size (default is 1.0)</string>
+            <key>footerText</key>
+            <string>Hint: open Settings in App Center to see the changes live!</string>
 		</dict>
 		<dict>
 			<key>cell</key>
@@ -49,13 +51,13 @@
 			<string>1.05</string>
 			<key>PostNotification</key>
 			<string>com.eswick.appcenter.notification.prefschange</string>
-		</dict>
-		<dict>
-			<key>cell</key>
-			<string>PSGroupCell</string>
-			<key>footerText</key>
-			<string>Hint: open Settings in App Center to see the changes live!</string>
-		</dict>
+        </dict>
+        <dict>
+            <key>cell</key>
+            <string>PSGroupCell</string>
+            <key>label</key>
+            <string>Engage with the makers on Twitter:</string>
+        </dict>
 		<dict>
 			<key>cell</key>
 			<string>PSButtonCell</string>
@@ -85,8 +87,6 @@
 			<integer>1</integer>
 			<key>label</key>
 			<string>App Center © 2017 Evan Swick and Christoph Parstorfer</string>
-			<key>footerText</key>
-			<string>INSERT LICENSE INFO</string>
 		</dict>
 	</array>
 	<key>title</key>
