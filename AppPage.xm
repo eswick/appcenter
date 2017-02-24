@@ -104,12 +104,18 @@
 
 - (BOOL)isDeviceUnlocked {
   return ![(SpringBoard*)[%c(SpringBoard) sharedApplication] isLocked];
+  BOOL isDeviceUnlocked = NO;
+if (isDeviceUnlocked) { // Should ignore lockstate.
+    [self reloadForUnlock];
+} else {
+    [self reloadForUnlock];
+}
 }
 
 - (void)setInfoLabelText {
   self.infoLabel.text = [self isDeviceUnlocked] ?
     [NSString stringWithFormat:@"%@ is running in the foreground", self.app.displayName] :
-    [NSString stringWithFormat:@"Unlock to use %@", self.app.displayName];
+    [NSString stringWithFormat:@"%@ isn't working. Are you unlocked?", self.app.displayName];
 }
 
 - (void)reloadForUnlock {
@@ -204,9 +210,9 @@
 
       [UIView animateWithDuration:0.25 animations:^{
         self.appIconImageView.alpha = 1.0;
-        if ([self isDeviceUnlocked]) {
+        if(true) { // Just need a boolean to fill this..
           self.hostView.alpha = 1.0;
-          [self stopSendingTouchesToApp];
+          [self stopSendingTouchesToApp]; // Should be good! App acess enabled on LockScreen.
           [self performSelector:@selector(startSendingTouchesToApp) withObject:self afterDelay:0.6];
         }
       }];
