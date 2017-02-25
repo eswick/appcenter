@@ -119,7 +119,11 @@
 }
 
 - (void)handleLongPress {
-  [[UIApplication sharedApplication] launchApplicationWithIdentifier:self.appIdentifier suspended:NO];
+  if ([[objc_getClass("BioProtectController") sharedInstance] requiresAuthenticationForIdentifier:@"com.apple.AppStore"]){
+    [[objc_getClass("BioProtectController") sharedInstance] launchProtectedApplicationWithIdentifier:self.appIdentifier];
+  } else {
+    [[UIApplication sharedApplication] launchApplicationWithIdentifier:self.appIdentifier suspended:NO];
+  }
 }
 
 - (void)prepareForReuse {
@@ -253,15 +257,25 @@
     [cell showActivity];
   }
 
-  dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (selectionViewController.searching ? 0.5 : 0.2) * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
-    [ccViewController appcenter_appSelected:cell.appIdentifier];
-  });
-
   if (selectionViewController.searching && !cell.button.selected) {
     [selectionViewController endSearching];
   }
 
   cell.button.selected = !cell.button.selected;
+
+  if ([[objc_getClass("BioProtectController") sharedInstance] requiresAuthenticationForIdentifier:@"com.apple.AppStore"]){
+    NSString *appID = cell.appIdentifier;
+    NSValue *arg1=[NSValue valueWithPointer:&appID];
+    NSArray *argumentsArray=[NSArray arrayWithObjects:arg1, NULL];
+    [[objc_getClass("BioProtectController") sharedInstance] authenticateForIdentifier:cell.appIdentifier
+                                                                              object:ccViewController
+                                                                            selector:@selector(appcenter_appSelected:)
+                                                   arrayOfArgumentsAsNSValuePointers:argumentsArray];
+  } else {
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (selectionViewController.searching ? 0.5 : 0.2) * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+      [ccViewController appcenter_appSelected:cell.appIdentifier];
+    });
+  }
 }
 
 - (void)loadView {

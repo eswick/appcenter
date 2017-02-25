@@ -53,3 +53,10 @@
 - (void)reloadForUnlock;
 
 @end
+
+@interface BioProtectController : NSObject
++(id)sharedInstance;
+-(BOOL)requiresAuthenticationForIdentifier:(NSString *)bundleIdentifier;
+-(void)launchProtectedApplicationWithIdentifier:(NSString *)bundleIdentifier;
+-(void)authenticateForIdentifier:(NSString *)identifier object:(id)object selector:(SEL)selector arrayOfArgumentsAsNSValuePointers:(NSArray *)arguments;
+@end
