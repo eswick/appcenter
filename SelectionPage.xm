@@ -12,7 +12,7 @@
   self = [super initWithFrame:CGRectMake(0, 0, size.width, size.height)];
   if (self) {
     UIImage *image = [UIImage imageWithContentsOfFile:@"/Library/Application Support/App Center/mag.png"];
-    [self setImage:image forState:UIControlStateNormal];
+    [self setGlyphImage:image selectedGlyphImage:image name:@"ACSearchButton"];
   }
   return self;
 }
@@ -184,7 +184,7 @@
         continue;
       }
       if ([key isEqualToString:[(SpringBoard*)[%c(SpringBoard) sharedApplication] _accessibilityFrontMostApplication].bundleIdentifier]) {
-        continue;
+        // TODO maybe disable the button
       }
       [result addObject:application];
     }

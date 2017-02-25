@@ -3,7 +3,7 @@
 
 @class ACAppIconCell;
 
-@interface ACSearchButton : UIButton
+@interface ACSearchButton : CCUIControlCenterButton
 
 @end
 

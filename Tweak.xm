@@ -32,6 +32,10 @@ static void LoadPrefs() {
   [[NSNotificationCenter defaultCenter] postNotificationName:@PREFS_CHANGE_ID object:nil];
 }
 
+static void RemoveAllPages() {
+  [[NSNotificationCenter defaultCenter] postNotificationName:@NOTIFICATION_REMOVEALLPAGES object:nil];
+}
+
 static CGFloat DegreesToRadians(CGFloat degrees) {
   return degrees * M_PI / 180;
 };
@@ -143,7 +147,6 @@ BOOL isNotFirstRun = false;
   MSHookIvar<UILabel*>(self, "_titleLabel").text = @"App Center";
   NSString *text = @"iPhone controls, Now Playing, and App Center each have their own cards.";
   MSHookIvar<UILabel*>(self, "_explanitoryText").text = text;
-  //[MSHookIvar<UIButton*>(self, "_continueButton") setTitle:@"Open App Center" forState:UIControlStateNormal];
   MSHookIvar<UIImageView*>(self, "_lastPageGlyphImageView").transform = CGAffineTransformMakeScale(-1, 1);
 }
 
@@ -199,10 +202,33 @@ BOOL isNotFirstRun = false;
   CFPreferencesAppSynchronize(CFSTR(BUNDLEID_C));
 }
 
-- (void)_loadPages {
+%new
+- (void)appcenter_removeAllPages {
+  if ([appPages count] > 0) {
+    for (UIViewController *contentViewController in [self contentViewControllers]) {
+      if ([contentViewController isKindOfClass:[ACAppPageViewController class]]) {
+        NSString *bundleIdentifier = [[(ACAppPageViewController*)contentViewController app] bundleIdentifier];
+        ACAppPageViewController *appPageViewController = (ACAppPageViewController*)contentViewController;
+        if (![bundleIdentifier isEqualToString:[[(SpringBoard*)[%c(SpringBoard) sharedApplication] _accessibilityFrontMostApplication] bundleIdentifier]]) {
+          [[appPageViewController app] appcenter_stopBackgroundingWithCompletion:nil];
+        }
+        [appPageViewController.sceneHostManager disableHostingForRequester:REQUESTER];
+
+        [self _removeContentViewController:contentViewController];
+        [appPages removeObject:bundleIdentifier];
+      }
+    }
+    [self appcenter_savePages];
+    reloadingControlCenter = true;
+    [self controlCenterWillPresent];
+    reloadingControlCenter = false;
+  }
+}
+
+%new
+- (void)appcenter_main {
   LoadPrefs();
   if (!isTweakEnabled) {
-    %orig;
     return;
   }
   if (!isNotFirstRun) {
@@ -211,8 +237,15 @@ BOOL isNotFirstRun = false;
     CFPreferencesAppSynchronize(CFSTR(BUNDLEID_C));
   }
 
-  %orig;
-
+  CFNotificationCenterAddObserver(
+    CFNotificationCenterGetDarwinNotifyCenter(),
+    NULL,
+    (CFNotificationCallback)RemoveAllPages,
+    CFSTR(NOTIFICATION_REMOVEALLPAGES),
+    NULL,
+    CFNotificationSuspensionBehaviorCoalesce
+  );
+  [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(appcenter_removeAllPages) name:@NOTIFICATION_REMOVEALLPAGES object:nil];
   CFNotificationCenterAddObserver(
     CFNotificationCenterGetDarwinNotifyCenter(),
     NULL,
@@ -240,6 +273,11 @@ BOOL isNotFirstRun = false;
   [selectionViewController release];
 
   [self appcenter_registerForDetectingLockState];
+}
+
+- (void)_loadPages {
+  %orig;
+  [self appcenter_main];
 }
 
 %new

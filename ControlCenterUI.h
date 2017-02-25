@@ -75,6 +75,7 @@
 
 @property (nonatomic, retain) FBSceneHostWrapperView *animationWrapperView;
 
+- (void)appcenter_main;
 - (void)appcenter_appSelected:(NSString*)bundleIdentifier;
 - (void)appcenter_removeAllPages;
 - (void)appcenter_savePages;

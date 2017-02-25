@@ -15,3 +15,5 @@
 	UIImageView *_headerImgV;
 }
 @end
+
+#define NOTIFICATION_REMOVEALLPAGES "com.eswick.appcenter.notification.removeallpages"

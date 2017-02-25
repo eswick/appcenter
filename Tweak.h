@@ -26,3 +26,4 @@ extern CGFloat rotationRadiansForInterfaceOrientation(UIInterfaceOrientation ori
 #define PREFS_APPPAGESCALE_C "AppPageScaleMultiplier"
 #define PREFS_ISFIRSTRUN_C "IsFirstRun"
 #define PREFS_APPPAGES_C "AppPages"
+#define NOTIFICATION_REMOVEALLPAGES "com.eswick.appcenter.notification.removeallpages"

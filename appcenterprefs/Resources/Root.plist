@@ -51,13 +51,29 @@
 			<string>1.05</string>
 			<key>PostNotification</key>
 			<string>com.eswick.appcenter.notification.prefschange</string>
-        </dict>
-        <dict>
-            <key>cell</key>
-            <string>PSGroupCell</string>
-            <key>label</key>
-            <string>Engage with the makers on Twitter:</string>
-        </dict>
+    </dict>
+    <dict>
+        <key>cell</key>
+        <string>PSGroupCell</string>
+        <key>label</key>
+        <string></string>
+    </dict>
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>action</key>
+			<string>removeAllPages:</string>
+			<key>icon</key>
+			<string>remove.png</string>
+			<key>label</key>
+			<string>Remove all App Pages</string>
+		</dict>
+    <dict>
+        <key>cell</key>
+        <string>PSGroupCell</string>
+        <key>label</key>
+        <string>Engage with the makers on Twitter:</string>
+    </dict>
 		<dict>
 			<key>cell</key>
 			<string>PSButtonCell</string>
@@ -66,7 +82,7 @@
 			<key>icon</key>
 			<string>twitter.png</string>
 			<key>label</key>
-			<string>@e_swick on Twitter</string>
+			<string>Evan Swick (@e_swick)</string>
 		</dict>
 		<dict>
 			<key>cell</key>
@@ -76,7 +92,7 @@
 			<key>icon</key>
 			<string>twitter.png</string>
 			<key>label</key>
-			<string>@_conath on Twitter</string>
+			<string>CONATH (@_conath)</string>
 		</dict>
 		<dict>
 			<key>cell</key>

@@ -11,6 +11,10 @@
 	return _specifiers;
 }
 
+- (void)removeAllPages:(id)arg1 {
+	CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), (CFNotificationName)CFSTR(NOTIFICATION_REMOVEALLPAGES), NULL, NULL, YES);
+}
+
 - (void)follow_eswick:(id)arg1{
     if([[UIApplication sharedApplication] canOpenURL:[NSURL URLWithString:@"twitter://"]]){
         [[UIApplication sharedApplication] openURL:[NSURL URLWithString:@"twitter://user?screen_name=e_swick"] options:@{} completionHandler:nil];
