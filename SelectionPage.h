@@ -60,3 +60,7 @@
 -(void)launchProtectedApplicationWithIdentifier:(NSString *)bundleIdentifier;
 -(void)authenticateForIdentifier:(NSString *)identifier object:(id)object selector:(SEL)selector arrayOfArgumentsAsNSValuePointers:(NSArray *)arguments;
 @end
+
+#pragma mark Constants
+
+#define NOCTIS_PREFS_PATH @"/var/mobile/Library/Preferences/com.laughingquoll.noctis.plist"

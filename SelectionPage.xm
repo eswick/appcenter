@@ -329,11 +329,20 @@
     [self.searchButton setTranslatesAutoresizingMaskIntoConstraints:false];
     self.searchButton.alpha = 1.0;
 
+    BOOL noctisEnabled = false;
+    // UISearchBar isn't supported by Noctis at the moment, this is a workaround to still make it work
+    /*NSMutableDictionary *dictionary = [NSMutableDictionary dictionaryWithContentsOfFile:NOCTIS_PREFS_PATH];
+    if (dictionary) {
+      if (dictionary[@"LQDDarkModeEnabled"]) {
+        noctisEnabled = true;
+      }
+    }*/
+    [dictionary release];
     self.searchBar = [[UISearchBar alloc] init];
     self.searchBar.translatesAutoresizingMaskIntoConstraints = false;
     self.searchBar.alpha = 0.0;
     self.searchBar.searchBarStyle = UISearchBarStyleMinimal;
-    self.searchBar.tintColor = [UIColor blackColor];
+    self.searchBar.tintColor = noctisEnabled ? [UIColor whiteColor] : [UIColor blackColor];
     self.searchBar.showsCancelButton = true;
     // Tint the magnifying glass and clear button the same color as the search bar
     NSArray *searchBarSubViews = [[self.searchBar.subviews objectAtIndex:0] subviews];
