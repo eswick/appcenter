@@ -119,7 +119,7 @@
 }
 
 - (void)handleLongPress {
-  if ([[objc_getClass("BioProtectController") sharedInstance] requiresAuthenticationForIdentifier:@"com.apple.AppStore"]){
+  if ([[objc_getClass("BioProtectController") sharedInstance] requiresAuthenticationForIdentifier:self.appIdentifier]){
     [[objc_getClass("BioProtectController") sharedInstance] launchProtectedApplicationWithIdentifier:self.appIdentifier];
   } else {
     [[UIApplication sharedApplication] launchApplicationWithIdentifier:self.appIdentifier suspended:NO];
@@ -263,7 +263,7 @@
 
   cell.button.selected = !cell.button.selected;
 
-  if ([[objc_getClass("BioProtectController") sharedInstance] requiresAuthenticationForIdentifier:@"com.apple.AppStore"]){
+  if (cell.button.selected && [[objc_getClass("BioProtectController") sharedInstance] requiresAuthenticationForIdentifier:cell.appIdentifier]){
     NSString *appID = cell.appIdentifier;
     NSValue *arg1=[NSValue valueWithPointer:&appID];
     NSArray *argumentsArray=[NSArray arrayWithObjects:arg1, NULL];
