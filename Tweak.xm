@@ -273,9 +273,23 @@ BOOL isNotFirstRun = false;
   [selectionViewController release];
 
   [self appcenter_registerForDetectingLockState];
+  
+  [[NSNotificationCenter defaultCenter] addObserver:self
+                                           selector:@selector(keyboardWillShow:)
+                                               name:UIKeyboardWillShowNotification
+                                             object:nil];
+
+  [[NSNotificationCenter defaultCenter] addObserver:self
+                                           selector:@selector(keyboardWillHide:)
+                                               name:UIKeyboardWillHideNotification
+                                             object:nil];
+  [[NSNotificationCenter defaultCenter] addObserver:self
+                                          selector:@selector(appcenter_scrollToSelectionPage)
+                                              name:NOTIFICATION_SCROLL_TO_SELECTIONPAGE
+                                            object:nil];
 }
 
-- (void)_loadPages {
+- (void)viewDidLoad {
   %orig;
   [self appcenter_main];
 }
@@ -451,24 +465,6 @@ BOOL isNotFirstRun = false;
 %new
 - (void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate {
   [[NSNotificationCenter defaultCenter] postNotificationName:SCROLL_END_ID object:self];
-}
-
-- (void)viewDidLoad {
-  %orig;
-
-  [[NSNotificationCenter defaultCenter] addObserver:self
-                                           selector:@selector(keyboardWillShow:)
-                                               name:UIKeyboardWillShowNotification
-                                             object:nil];
-
-  [[NSNotificationCenter defaultCenter] addObserver:self
-                                           selector:@selector(keyboardWillHide:)
-                                               name:UIKeyboardWillHideNotification
-                                             object:nil];
-  [[NSNotificationCenter defaultCenter] addObserver:self
-                                          selector:@selector(appcenter_scrollToSelectionPage)
-                                              name:NOTIFICATION_SCROLL_TO_SELECTIONPAGE
-                                            object:nil];
 }
 
 - (void)viewWillLayoutSubviews {

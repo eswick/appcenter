@@ -188,7 +188,7 @@
         continue;
       }
       if ([key isEqualToString:[(SpringBoard*)[%c(SpringBoard) sharedApplication] _accessibilityFrontMostApplication].bundleIdentifier]) {
-        // TODO maybe disable the button
+        continue;
       }
       [result addObject:application];
     }
@@ -330,14 +330,14 @@
     self.searchButton.alpha = 1.0;
 
     BOOL noctisEnabled = false;
-    // UISearchBar isn't supported by Noctis at the moment, this is a workaround to still make it work
+    // UISearchBar isn't supported by Noctis at the moment, this is a workaround to still make it work. Unfortunately it crashes SpringBoard.
     /*NSMutableDictionary *dictionary = [NSMutableDictionary dictionaryWithContentsOfFile:NOCTIS_PREFS_PATH];
     if (dictionary) {
       if (dictionary[@"LQDDarkModeEnabled"]) {
         noctisEnabled = true;
       }
-    }*/
-    [dictionary release];
+    }
+    [dictionary release];*/
     self.searchBar = [[UISearchBar alloc] init];
     self.searchBar.translatesAutoresizingMaskIntoConstraints = false;
     self.searchBar.alpha = 0.0;
