@@ -208,20 +208,23 @@ BOOL isNotFirstRun = false;
     for (UIViewController *contentViewController in [self contentViewControllers]) {
       if ([contentViewController isKindOfClass:[ACAppPageViewController class]]) {
         NSString *bundleIdentifier = [[(ACAppPageViewController*)contentViewController app] bundleIdentifier];
-        ACAppPageViewController *appPageViewController = (ACAppPageViewController*)contentViewController;
-        if (![bundleIdentifier isEqualToString:[[(SpringBoard*)[%c(SpringBoard) sharedApplication] _accessibilityFrontMostApplication] bundleIdentifier]]) {
-          [[appPageViewController app] appcenter_stopBackgroundingWithCompletion:nil];
+        if (bundleIdentifier) {
+          ACAppPageViewController *appPageViewController = (ACAppPageViewController*)contentViewController;
+          if (![bundleIdentifier isEqualToString:[[(SpringBoard*)[%c(SpringBoard) sharedApplication] _accessibilityFrontMostApplication] bundleIdentifier]]) {
+            [[appPageViewController app] appcenter_stopBackgroundingWithCompletion:nil];
+          }
+          [appPageViewController.sceneHostManager disableHostingForRequester:REQUESTER];
         }
-        [appPageViewController.sceneHostManager disableHostingForRequester:REQUESTER];
 
         [self _removeContentViewController:contentViewController];
-        [appPages removeObject:bundleIdentifier];
       }
     }
+    [appPages removeAllObjects];
     [self appcenter_savePages];
     reloadingControlCenter = true;
     [self controlCenterWillPresent];
     reloadingControlCenter = false;
+    [selectionViewController.gridViewController.collectionView reloadData];
   }
 }
 
@@ -262,9 +265,11 @@ BOOL isNotFirstRun = false;
 
   if (savedPages) {
     for (NSString *bundleID in savedPages) {
-      [appPages addObject:bundleID];
       ACAppPageViewController *appPage = [[ACAppPageViewController alloc] initWithBundleIdentifier:bundleID];
-      [self _addContentViewController:appPage];
+      if (appPage) {
+        [appPages addObject:bundleID];
+        [self _addContentViewController:appPage];
+      } // else there's a problem with the page (maybe the corresponding app was uninstalled), so we don't want it loaded or saved.
     }
   }
 
@@ -273,7 +278,7 @@ BOOL isNotFirstRun = false;
   [selectionViewController release];
 
   [self appcenter_registerForDetectingLockState];
-  
+
   [[NSNotificationCenter defaultCenter] addObserver:self
                                            selector:@selector(keyboardWillShow:)
                                                name:UIKeyboardWillShowNotification
@@ -327,6 +332,7 @@ BOOL isNotFirstRun = false;
 
     for (UIViewController *contentViewController in [self contentViewControllers]) {
       if ([contentViewController isKindOfClass:[ACAppPageViewController class]]) {
+
         if ([[[(ACAppPageViewController*)contentViewController app] bundleIdentifier] isEqualToString:bundleIdentifier]) {
 
           ACAppPageViewController *appPageViewController = (ACAppPageViewController*)contentViewController;
@@ -346,6 +352,7 @@ BOOL isNotFirstRun = false;
           reloadingControlCenter = true;
           [self controlCenterWillPresent];
           reloadingControlCenter = false;
+          [self.gridViewController.collectionView reloadData];
         }
       }
     }
@@ -353,10 +360,17 @@ BOOL isNotFirstRun = false;
     return;
   }
 
+  SBApplication *application = [[%c(SBApplicationController) sharedInstance] applicationWithBundleIdentifier:bundleIdentifier];
+  if (!application) {
+    reloadingControlCenter = true;
+    [self controlCenterWillPresent];
+    reloadingControlCenter = false;
+    [self.gridViewController.collectionView reloadData];
+    return;
+  }
+
   [appPages addObject:bundleIdentifier];
   [self appcenter_savePages];
-
-  SBApplication *application = [[%c(SBApplicationController) sharedInstance] applicationWithBundleIdentifier:bundleIdentifier];
 
   ACAppIconCell *selectedCell = selectionViewController.selectedCell;
   CGRect initialIconPosition = [selectedCell.imageView convertRect:selectedCell.imageView.bounds toView:self.view];
@@ -628,6 +642,9 @@ BOOL isNotFirstRun = false;
     }
 
     SBApplication *application = [[%c(SBApplicationController) sharedInstance] applicationWithBundleIdentifier:displayIdentifier];
+    if (!application) {
+      goto skip;
+    }
 
     if (![snapshotViewCache objectForKey:displayIdentifier]) {
       SBAppSwitcherSnapshotView *snapshotView = [%c(SBAppSwitcherSnapshotView) appSwitcherSnapshotViewForDisplayItem:[self _displayItemForApplication:application] orientation:UIInterfaceOrientationPortrait preferringDownscaledSnapshot:true loadAsync:false withQueue:dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)];
