@@ -352,7 +352,7 @@ BOOL isNotFirstRun = false;
           reloadingControlCenter = true;
           [self controlCenterWillPresent];
           reloadingControlCenter = false;
-          [self.gridViewController.collectionView reloadData];
+          [[[selectionViewController gridViewController] collectionView] reloadData];
         }
       }
     }
@@ -365,7 +365,7 @@ BOOL isNotFirstRun = false;
     reloadingControlCenter = true;
     [self controlCenterWillPresent];
     reloadingControlCenter = false;
-    [self.gridViewController.collectionView reloadData];
+    [[[selectionViewController gridViewController] collectionView] reloadData];
     return;
   }
 

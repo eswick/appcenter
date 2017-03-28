@@ -120,10 +120,20 @@
 
 - (void)handleLongPress {
   if ([[objc_getClass("BioProtectController") sharedInstance] requiresAuthenticationForIdentifier:self.appIdentifier]){
-    [[objc_getClass("BioProtectController") sharedInstance] launchProtectedApplicationWithIdentifier:self.appIdentifier];
+    // Un-commenting any of these lines will lead to a crash, seems like a bug in BioProtect :(
+    /*[[objc_getClass("BioProtectController") sharedInstance] launchProtectedApplicationWithIdentifier:self.appIdentifier];*/
+    /*[[objc_getClass("BioProtectController") sharedInstance] authenticateForIdentifier:self.appIdentifier
+                                                                              object:self
+                                                                            selector:@selector(launchApp)
+                                                   arrayOfArgumentsAsNSValuePointers:nil];
+    */
   } else {
-    [[UIApplication sharedApplication] launchApplicationWithIdentifier:self.appIdentifier suspended:NO];
+    [self launchApp];
   }
+}
+
+- (void)launchApp {
+  [[UIApplication sharedApplication] launchApplicationWithIdentifier:self.appIdentifier suspended:NO];
 }
 
 - (void)prepareForReuse {
