@@ -305,10 +305,14 @@ BOOL isNotFirstRun = false;
   notify_register_dispatch("com.apple.springboard.lockstate", &notify_token,dispatch_get_main_queue(), ^(int token) {
     uint64_t state = UINT64_MAX;
     notify_get_state(token, &state);
-    if (state == 0) { // unlocked
-      [self appcenter_reloadForUnlock];
-    }
-  });
+    if (state == 0) { // Should ignore lockstate.
+            [self appcenter_reloadForUnlock];
+
+        } else {
+            [self appcenter_reloadForUnlock];
+        }
+
+    });
 }
 
 %new

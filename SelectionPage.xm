@@ -468,7 +468,7 @@
 
   self.lockedLabel = [[CCUIControlCenterLabel alloc] initWithFrame:CGRectMake(0,0,200,10)];
   self.lockedLabel.translatesAutoresizingMaskIntoConstraints = false;
-  self.lockedLabel.text = @"Unlock to use App Center";
+  self.lockedLabel.text = @"App Center is broken on the LockScreen.";
   self.lockedLabel.textAlignment = NSTextAlignmentCenter;
   self.lockedLabel.font = [UIFont systemFontOfSize:[ACManualLayout appDisplayNameFontSize]*3/2];
   [self.lockedLabel setStyle:(unsigned long long) 0];//dark translucent text
@@ -529,10 +529,10 @@
   if (!reloadingControlCenter) {
     [self.gridViewController.collectionView reloadData];
     if ([(SpringBoard*)[%c(SpringBoard) sharedApplication] isLocked]) {
-      self.gridViewController.view.hidden = true;
-      self.view.searchButton.hidden = true;
+      self.gridViewController.view.hidden = false; // Should allow for app selection.
+      self.view.searchButton.hidden = false; // Enable search.
       [self.view addSubview:self.lockedLabel];
-      self.lockedLabel.alpha = 1.0;
+      self.lockedLabel.alpha = 0.0;
       [self.view addConstraint:[NSLayoutConstraint constraintWithItem:self.gridViewController.view attribute:NSLayoutAttributeCenterY relatedBy:NSLayoutRelationEqual toItem:self.lockedLabel attribute:NSLayoutAttributeCenterY multiplier:1.0 constant:0]];
       [self.view addConstraint:[NSLayoutConstraint constraintWithItem:self.gridViewController.view attribute:NSLayoutAttributeCenterX relatedBy:NSLayoutRelationEqual toItem:self.lockedLabel attribute:NSLayoutAttributeCenterX multiplier:1.0 constant:0]];
     }
